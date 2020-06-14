@@ -1,32 +1,24 @@
-OPENCL_INCLUDE_PATH    = /home/_dev/OpenCL/SDK/include/
-OPENCL_LIB_PATH        = /home/_dev/OpenCL/SDK/lib/x86_64/
-OPENCL_LIB             = OpenCL
+CC          = nvcc
+LD          = nvcc
+CFLAG       = 
+PROG_NAME   = gravlens
 
-CC                     = g++
-WARN                   = -Wall
+SRC_DIR     = src
+OBJECTS_DIR   = bin/objects
+BIN_DIR     = bin
 
-INCLUDE                += -I. -I/usr/include -I/usr/local/include -I$(OPENCL_INCLUDE_PATH)
-LIBPATH                += -L. -L/usr/lib -L$(OPENCL_LIB_PATH)
-LIBRARIES              += -l$(OPENCL_LIB)
+SRC_LIST = $(wildcard $(SRC_DIR)/*.cu)
+OBJ_LIST = $(OBJECTS_DIR)/$(notdir $(SRC_LIST:.cu=.o))
 
-CFLAGS                 = -c -g -O3 $(INCLUDE) $(WARN)
+.PHONY: all clean $(PROG_NAME) compile
 
-OBJECTS                = gravlens.o
-TARGET                 = gravlens
+all: $(PROG_NAME)
 
-RM                     = rm -f
+compile: 
+	$(CC) -c $(CFLAG) $(SRC_LIST) -o $(OBJ_LIST)
 
-$(TARGET): $(OBJECTS)
-	@echo "Linking '$@'"
-	$(CC) -o $@ $(OBJECTS) $(LIBPATH) $(LIBRARIES)
-
-%.o: %.cpp
-	@echo "Building '$@'"
-	$(CC) $(CFLAGS) -c $<
-
-gravlens.o: gravlens.cpp gravlens.hpp
+$(PROG_NAME): compile
+	$(LD) $(OBJ_LIST) -o $(BIN_DIR)/$@
 
 clean:
-	@echo "Cleaning $(OBJECTS) $(TARGET)"
-	$(RM) $(OBJECTS) $(TARGET)
-
+	rm -f $(BIN_DIR)/$(PROG_NAME) $(OBJECTS_DIR)/*.o
