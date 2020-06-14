@@ -1,4 +1,3 @@
 gravlens
-*.o
 bin/gravlens
-bin/object/*
+bin/object/*.o
