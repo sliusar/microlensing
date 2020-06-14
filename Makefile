@@ -1,24 +1,55 @@
-CC          = nvcc
-LD          = nvcc
-CFLAG       = 
-PROG_NAME   = gravlens
+CC          := nvcc
 
-SRC_DIR     = src
-OBJECTS_DIR   = bin/objects
-BIN_DIR     = bin
+TARGET      := gravlens
 
-SRC_LIST = $(wildcard $(SRC_DIR)/*.cu)
-OBJ_LIST = $(OBJECTS_DIR)/$(notdir $(SRC_LIST:.cu=.o))
+SRCDIR      := src
+INCDIR      := inc
+BUILDDIR    := obj
+TARGETDIR   := bin
+RESDIR      := res
+SRCEXT      := cu
+DEPEXT      := d
+OBJEXT      := o
 
-.PHONY: all clean $(PROG_NAME) compile
+CFLAGS      := 
+LIB         := 
+INC         := -I$(INCDIR) -I/usr/local/include
+INCDEP      := -I$(INCDIR)
 
-all: $(PROG_NAME)
+SOURCES     := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 
-compile: 
-	$(CC) -c $(CFLAG) $(SRC_LIST) -o $(OBJ_LIST)
+all: resources $(TARGET)
 
-$(PROG_NAME): compile
-	$(LD) $(OBJ_LIST) -o $(BIN_DIR)/$@
+remake: cleaner all
+
+resources: directories
+	@cp -r $(RESDIR)/ $(TARGETDIR)/
+
+directories:
+	@mkdir -p $(TARGETDIR)
+	@mkdir -p $(BUILDDIR)
 
 clean:
-	rm -f $(BIN_DIR)/$(PROG_NAME) $(OBJECTS_DIR)/*.o
+	$(RM) -rf $(BUILDDIR)/*
+
+
+cleaner: clean
+	$(RM) -rf $(TARGETDIR)/*
+
+-include $(OBJECTS:.$(OBJEXT)=.$(DEPEXT))
+
+$(TARGET): $(OBJECTS)
+	$(CC) -o $(TARGETDIR)/$(TARGET) $^ $(LIB)
+
+$(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INC) -c -o $@ $<
+	@$(CC) $(CFLAGS) $(INCDEP) -MM $(SRCDIR)/$*.$(SRCEXT) > $(BUILDDIR)/$*.$(DEPEXT)
+	@cp -f $(BUILDDIR)/$*.$(DEPEXT) $(BUILDDIR)/$*.$(DEPEXT).tmp
+	@sed -e 's|.*:|$(BUILDDIR)/$*.$(OBJEXT):|' < $(BUILDDIR)/$*.$(DEPEXT).tmp > $(BUILDDIR)/$*.$(DEPEXT)
+	@sed -e 's/.*://' -e 's/\\$$//' < $(BUILDDIR)/$*.$(DEPEXT).tmp | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILDDIR)/$*.$(DEPEXT)
+	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
+
+#Non-File Targets
+.PHONY: all remake clean cleaner
