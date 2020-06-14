@@ -1,3 +1,4 @@
 gravlens
 *.o
-
+bin/*
+object/*
