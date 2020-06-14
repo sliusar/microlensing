@@ -1,5 +1,3 @@
-CC          := nvcc
-
 TARGET      := gravlens
 
 SRCDIR      := src
@@ -11,6 +9,7 @@ SRCEXT      := cu
 DEPEXT      := d
 OBJEXT      := o
 
+CC          := nvcc
 CFLAGS      := 
 LIB         := 
 INC         := -I$(INCDIR) -I/usr/local/include
@@ -24,7 +23,7 @@ all: resources $(TARGET)
 remake: cleaner all
 
 resources: directories
-	@cp -r $(RESDIR)/ $(TARGETDIR)/
+#	@cp -r $(RESDIR)/ $(TARGETDIR)/
 
 directories:
 	@mkdir -p $(TARGETDIR)
@@ -32,7 +31,6 @@ directories:
 
 clean:
 	$(RM) -rf $(BUILDDIR)/*
-
 
 cleaner: clean
 	$(RM) -rf $(TARGETDIR)/*
@@ -51,5 +49,4 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@sed -e 's/.*://' -e 's/\\$$//' < $(BUILDDIR)/$*.$(DEPEXT).tmp | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILDDIR)/$*.$(DEPEXT)
 	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
 
-#Non-File Targets
 .PHONY: all remake clean cleaner
