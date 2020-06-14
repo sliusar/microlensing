@@ -4,9 +4,8 @@
 #include <common.cuh>
 #include "yaml-cpp/yaml.h"
 
-bool debug = true;
-
 class Configuration {
+    int debug;
     public:
         Configuration(char *);
         ~Configuration();
