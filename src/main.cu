@@ -16,7 +16,13 @@ using namespace std;
 
 struct Microlens { float x1, x2, v1, v2, m; } ;
 struct Ray { float x1, x2; };
-struct Configuration { float sigma, sigma_c, gamma, R_field, M_avg, R_rays, dx_rays; int nMicrolenses, nRays, nRays1d; float dt, t_max; int image_height, image_width; float image_y_height, image_y_width, image_center_y1, image_center_y2, image_pixel_y1_size, image_pixel_y2_size, image_y1_left, image_y2_bottom, image_y1_right, image_y2_top; };
+struct Configuration { 
+  float sigma, sigma_c, gamma, R_field, M_avg, R_rays, dx_rays;
+  int nMicrolenses, nRays, nRays1d;
+  float dt, t_max;
+  int image_height, image_width;
+  float image_y_height, image_y_width, image_center_y1, image_center_y2, image_pixel_y1_size, image_pixel_y2_size, image_y1_left, image_y2_bottom, image_y1_right, image_y2_top;
+};
 
 float distance(float x, float y, float center_x, float center_y) {
   return sqrt(pow(x - center_x, 2) + pow(y - center_y, 2));
