@@ -23,6 +23,7 @@ from matplotlib.colors import Normalize
 from scipy.interpolate import interpn
 
 def density_scatter(x, y, bins=50):
+    fig = plt.figure(figsize=(10, 10))
     heatmap, xedges, yedges = np.histogram2d(x, y, bins=bins)
     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
     plt.clf()
@@ -46,12 +47,14 @@ rays_y = np.loadtxt("rays_y.dat")
 m = np.logical_and(np.abs(rays_y[:,0]) <= 20, np.abs(rays_y[:,1]) <= 20)
 x = rays_y[:,0][m]
 y = rays_y[:,1][m]
-density_scatter(x, y, bins=[100, 100])
+density_scatter(x, y, bins=[200, 200])
 
 rays_y = np.loadtxt("rays_y.dat")
 m = np.logical_and(np.abs(rays_y[:,0]) <= 20, np.abs(rays_y[:,1]) <= 20)
 x = rays_y[:,0][m]
 y = rays_y[:,1][m]
-density_scatter(x, y, bins=[100, 100])
+density_scatter(x, y, bins=[200, 200])
+
+
 
 
