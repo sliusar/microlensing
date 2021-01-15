@@ -1,1 +1,1 @@
-This project was created to calculate the microlensing effects using OpenCL compatible devises.
+This project was created to compute microlensing using CUDA.

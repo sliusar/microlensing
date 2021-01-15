@@ -4,11 +4,11 @@
 #include <common.cuh>
 #include "yaml-cpp/yaml.h"
 
-class Configuration {
+class CudaConfiguration {
     int debug;
     public:
-        Configuration(char *);
-        ~Configuration();
+        CudaConfiguration(char *);
+        ~CudaConfiguration();
         void reconfigure();
 };
 

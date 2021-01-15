@@ -2,3 +2,4 @@ gravlens
 bin/*
 obj/*
 orig/*
+.ipynb_checkpoints/
