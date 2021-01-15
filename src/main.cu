@@ -1,14 +1,15 @@
 #include <common.cuh>
 #include <config.cuh>
+#include "timer.h"
 
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "timer.h"
 #include <time.h>
 
 #include <iostream>
 #include <fstream>
+
 using namespace std;
 
 #define CUDA_BLOCK_SIZE 1024
