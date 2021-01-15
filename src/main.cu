@@ -16,7 +16,7 @@ using namespace std;
 
 struct Microlens { float x1, x2, v1, v2, m; } ;
 struct Ray { float x1, x2; };
-struct Configuration { float sigma, sigma_c, gamma, R_field, M_avg, R_rays, dx_rays; int nMicrolenses, nRays; float dt, t_max; int image_height, image_width; float image_y_height, image_y_width, image_center_y1, image_center_y2, image_pixel_y1_size, image_pixel_y2_size, image_y1_left, image_y2_bottom, image_y1_right, image_y2_top; };
+struct Configuration { float sigma, sigma_c, gamma, R_field, M_avg, R_rays, dx_rays; int nMicrolenses, nRays, nRays1d; float dt, t_max; int image_height, image_width; float image_y_height, image_y_width, image_center_y1, image_center_y2, image_pixel_y1_size, image_pixel_y2_size, image_y1_left, image_y2_bottom, image_y1_right, image_y2_top; };
 
 float distance(float x, float y, float center_x, float center_y) {
   return sqrt(pow(x - center_x, 2) + pow(y - center_y, 2));
@@ -43,8 +43,8 @@ void populateRays(Ray *rays, int nRays, float R_rays, float dx_rays) {
   }
 }
 
-__device__ float dst2_inv(float x, float y, float center_x, float center_y) {
-  return pow(rhypotf(x - center_x, y - center_y), 2);
+__device__ float dst2_inv(float x, float y) {
+  return pow(rhypotf(x, y), 2);
 }
 
 __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t) {
@@ -56,11 +56,11 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
     float sum_x2 = 0.0;
     for (int i = 0; i < c.nMicrolenses; i++) {
       Microlens ul = uls[i];
-      float m_x1 = ul.x1 + (ul.v1 * t);
-      float m_x2 = ul.x2 + (ul.v2 * t);
-      float ri = ul.m * dst2_inv(ray_x1, ray_x2, m_x1, m_x2);
-      sum_x1 += (ray_x1 - m_x1) * ri;
-      sum_x2 += (ray_x2 - m_x2) * ri;
+      float m_x1 = ray_x1 - ul.x1 - (ul.v1 * t);
+      float m_x2 = ray_x2 - ul.x2 - (ul.v2 * t);
+      float ri = ul.m * dst2_inv(m_x1, m_x2);
+      sum_x1 += m_x1 * ri;
+      sum_x2 += m_x2 * ri;
     }
     rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
     rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
@@ -90,12 +90,13 @@ int main(const int argc, const char** argv) {
   printf("sigma: %f\nsigma_c: %f\ngamma: %f\nR: %f\nM_avg: %f\nN: %d\n", conf.sigma, conf.sigma_c, conf.gamma, conf.R_field, conf.M_avg, conf.nMicrolenses);
 
   // Rays configuration
-  conf.R_rays = 50;
+  conf.R_rays = 100;
   conf.dx_rays = 0.1;
-  conf.nRays = pow((2 * conf.R_rays / conf.dx_rays) + 1, 2);
+  conf.nRays1d = 2 * conf.R_rays / conf.dx_rays + 1;
+  conf.nRays = pow(conf.nRays1d, 2);
 
   // Iterations calculator
-  conf.dt = 0.01;
+  conf.dt = 0.1;
   conf.t_max = 0.1;
 
   // Image definitions
@@ -143,24 +144,31 @@ int main(const int argc, const char** argv) {
   int nBlocks = (conf.nRays + CUDA_BLOCK_SIZE - 1) / CUDA_BLOCK_SIZE;
 
   ofstream outf;
-  outf.open("rays_y.dat");
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
     StartTimer();
-    cout << "Time: " << t << endl;
     deflectRays<<<nBlocks, CUDA_BLOCK_SIZE>>>(ul_buf, ray_buf, conf, t); // compute ray deflections
     cudaMemcpy(rays, ray_buf, ray_bytes, cudaMemcpyDeviceToHost);
-    cout << "Iteration completed in " << GetElapsedTime() << " ms" << endl;
+    cout << "Iteration t=" << t << " completed in " << GetElapsedTime() << " ms" << endl;
     
     cudaDeviceSynchronize();
     dim3 nBlocks_image = dim3((conf.image_width + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d, (conf.image_height + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d);
     cout << "Starting map calculation ..."<< endl;
     //buildMap<<<nBlocks_image, dim3(CUDA_BLOCK_SIZE_2d, CUDA_BLOCK_SIZE_2d)>>>(ray_buf, conf, image_buf); // build map from rays
 
-    cout << "Writing data ..."<< endl;
-    for (int i = 0; i <= conf.nRays; i++) outf << rays[i].x1 << " " << rays[i].x2 << endl;
+    char filename[32];
+    sprintf(filename, "rays_y_%.2f.dat", t);
+    cout << "Writing data to " << filename << " ..."<< endl;
+    outf.open(filename);
+    for (int i = 0; i <= conf.nRays; i++) {
+      if (rays[i].x1 >= -20 && rays[i].x1 <= 20) {
+        if (rays[i].x2 >= -20 && rays[i].x2 <= 20) {
+          outf << rays[i].x1 << " " << rays[i].x2 << endl;
+        }
+      }
+    }
+    outf.close();
     break;
   }
-  outf.close();
 
   free(microlenses);
   free(rays);

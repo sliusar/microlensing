@@ -9,7 +9,7 @@ SRCEXT      := cu
 DEPEXT      := d
 OBJEXT      := o
 
-CC          := nvcc -gencode arch=compute_61,code=sm_61
+CC          := nvcc -O3 #--use_fast_math arch=compute_61,code=sm_61 -gencode
 CFLAGS      := 
 LIB         := 
 INC         := -I$(INCDIR) -I/usr/local/include
