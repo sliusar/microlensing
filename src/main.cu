@@ -87,11 +87,20 @@ void deflectRaysCPU(Microlens *uls, Ray *rays, const Configuration c, const floa
 }
 
 __global__ void buildMap(Ray *rays, const Configuration c, float *image) {
-  int i = blockDim.x * blockIdx.x + threadIdx.x;
-  int j = blockDim.y * blockIdx.y + threadIdx.y;
-  if (i < c.image_width && j < c.image_height) {
-    for (int r = 0; i < c.nRays; i++) {
-
+  int row = blockIdx.y * blockDim.y + threadIdx.y;
+  int col = blockIdx.x * blockDim.x + threadIdx.x;
+  if (col < c.image_width && row < c.image_height) {
+    float y1_min = c.image_y1_left + col * c.image_pixel_y1_size;
+    float y1_max = y1_min + c.image_pixel_y1_size;
+    float y2_min = c.image_y2_bottom + row * c.image_pixel_y2_size;
+    float y2_max = y2_min + c.image_pixel_y1_size;
+    for (int i = 0; i < c.nRays; i++) {
+      Ray ray = rays[i];
+      if (y1_min <= ray.x1 && ray.x1 < y1_max) {
+        if (y2_min <= ray.x2 && ray.x2 < y2_max) {
+          image[col * c.image_width + row]++;
+        }
+      }
     }
   }
 }
@@ -112,15 +121,14 @@ int main(const int argc, const char** argv) {
 
   Microlens *microlenses = (Microlens*)malloc(ul_bytes);
   Ray *rays = (Ray*)malloc(ray_bytes);
-  //float *image = (float*)malloc(image_bytes);
+  float *image = (float*)malloc(image_bytes);
 
   StartTimer();
   randomiseMicrolenses(microlenses, conf.nMicrolenses, conf.R_field);  
-  cout << "Creating microlensing field in " << GetElapsedTime() << " ms" << endl;
+  cout << "Creating microlensing field in " << GetElapsedTime() << " s" << endl;
   populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
-  cout << "Defining rays field in " << GetElapsedTime() << " ms" << endl;
-
-  //memset(image, 0, sizeof(image));
+  cout << "Defining rays field in " << GetElapsedTime() << " s" << endl;
+  memset(image, 0, sizeof(image));
 
   Microlens *ul_buf;
   cudaMalloc(&ul_buf, ul_bytes);
@@ -130,24 +138,31 @@ int main(const int argc, const char** argv) {
   cudaMalloc(&ray_buf, ray_bytes);
   cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
 
-  //float *image_buf;
-  //cudaMalloc(&image_buf, image_bytes);
-  //cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
+  float *image_buf;
+  cudaMalloc(&image_buf, image_bytes);
+  cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
 
   int nBlocks = (conf.nRays + CUDA_BLOCK_SIZE - 1) / CUDA_BLOCK_SIZE;
 
   ofstream outf;
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
+    cout << "Iteration t: " << t << endl;
+    cout << "  Executing ray tracing ... " << endl;
     StartTimer();
-    //deflectRaysCPU(microlenses, rays, conf, t);
     deflectRays<<<nBlocks, CUDA_BLOCK_SIZE>>>(ul_buf, ray_buf, conf, t); // compute ray deflections
+    //deflectRaysCPU(microlenses, rays, conf, t); // CPU version
     cudaMemcpy(rays, ray_buf, ray_bytes, cudaMemcpyDeviceToHost);
-    cout << "Iteration t=" << t << " completed in " << GetElapsedTime() << " ms" << endl;
-    
     cudaDeviceSynchronize();
+    cout << "    done in " << GetElapsedTime() << " s" << endl;
+    
+
+    cout << "  Executing amplification map calculation ... " << endl;
+    StartTimer();
     dim3 nBlocks_image = dim3((conf.image_width + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d, (conf.image_height + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d);
-    cout << "Starting map calculation ..."<< endl;
-    //buildMap<<<nBlocks_image, dim3(CUDA_BLOCK_SIZE_2d, CUDA_BLOCK_SIZE_2d)>>>(ray_buf, conf, image_buf); // build map from rays
+    buildMap<<<nBlocks_image, dim3(CUDA_BLOCK_SIZE_2d, CUDA_BLOCK_SIZE_2d)>>>(ray_buf, conf, image_buf); // build map from rays
+    cudaMemcpy(image, image_buf, image_bytes, cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+    cout << "    done in " << GetElapsedTime() << " s" << endl;
 
     char filename[32];
     sprintf(filename, "rays_y_%.2f.dat", t);
@@ -161,6 +176,15 @@ int main(const int argc, const char** argv) {
       }
     }
     outf.close();
+
+    outf.open("image.dat");
+    for (int i = 0; i < conf.image_width; i++) {
+      for (int j = 0; j < conf.image_height; j++) {
+        outf << image[i * conf.image_width + j] << endl;
+      }
+    }
+    outf.close();
+
     break;
   }
 

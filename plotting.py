@@ -67,4 +67,9 @@ x = rays_y[:,0][m]
 y = rays_y[:,1][m]
 density_scatter(x, y, bins=[200, 200])
 
+image = np.loadtxt("image.dat")
+
+plt.imshow(image.reshape([500,500]))
+plt.xlim([])
+
 
