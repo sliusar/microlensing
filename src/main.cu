@@ -51,6 +51,10 @@ __device__ float dst2_inv(float x, float y) {
   return pow(rhypotf(x, y), 2);
 }
 
+float dst2_inv_cpu(float x, float y) {
+  return 1 / (pow(x, 2) + pow(y, 2));
+}
+
 __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t) {
   int ri = blockDim.x * blockIdx.x + threadIdx.x;
   if (ri < c.nRays) {
@@ -63,6 +67,25 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
       float m_x1 = ray_x1 - ul.x1 - (ul.v1 * t);
       float m_x2 = ray_x2 - ul.x2 - (ul.v2 * t);
       float ri = ul.m * dst2_inv(m_x1, m_x2);
+      sum_x1 += m_x1 * ri;
+      sum_x2 += m_x2 * ri;
+    }
+    rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
+    rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
+  }
+}
+
+void deflectRaysCPU(Microlens *uls, Ray *rays, const Configuration c, const float t) {
+  for (int ri = 0; ri < c.nRays; ri++) {
+    float ray_x1 = rays[ri].x1;
+    float ray_x2 = rays[ri].x2;
+    float sum_x1 = 0.0;
+    float sum_x2 = 0.0;
+    for (int i = 0; i < c.nMicrolenses; i++) {
+      Microlens ul = uls[i];
+      float m_x1 = ray_x1 - ul.x1 - (ul.v1 * t);
+      float m_x2 = ray_x2 - ul.x2 - (ul.v2 * t);
+      float ri = ul.m * dst2_inv_cpu(m_x1, m_x2);
       sum_x1 += m_x1 * ri;
       sum_x2 += m_x2 * ri;
     }
@@ -141,6 +164,7 @@ int main(const int argc, const char** argv) {
   ofstream outf;
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
     StartTimer();
+    //deflectRaysCPU(microlenses, rays, conf, t);
     deflectRays<<<nBlocks, CUDA_BLOCK_SIZE>>>(ul_buf, ray_buf, conf, t); // compute ray deflections
     cudaMemcpy(rays, ray_buf, ray_bytes, cudaMemcpyDeviceToHost);
     cout << "Iteration t=" << t << " completed in " << GetElapsedTime() << " ms" << endl;
