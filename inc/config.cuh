@@ -20,6 +20,7 @@ class Configuration {
         ~Configuration() {};
         void reconfigure();
         void setdebug(bool);
+        void display();
 };
 
 #endif /* !INCLUDE_CONFIG_CUH */

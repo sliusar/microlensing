@@ -111,25 +111,8 @@ int main(const int argc, const char** argv) {
   }
 
   Configuration conf(argv[1]);
+  conf.display();
   if (conf.randomise_with_time) srand(time(NULL));
-
-  cout << "CONFIGURATION:" << endl;
-  cout << "--- GLS ---" << endl;
-  cout << "  sigma: " << conf.sigma << endl;
-  cout << "  sigma_c: " << conf.sigma_c << endl;
-  cout << "  gamma: " << conf.gamma << endl;
-  cout << "  R_field: " << conf.R_field << endl;
-  cout << "  M_avg: " << conf.M_avg << endl;
-  cout << "  nMicrolenses: " << conf.nMicrolenses << endl;
-  cout << "  t_max: " << conf.t_max << endl;
-  cout << "  dt: " << conf.dt << endl;
-  cout << endl;
-
-  cout << "--- Ray tracing ---" << endl;
-  cout << "  R_rays: " << conf.R_rays << endl;
-  cout << "  dx_rays: " << conf.dx_rays << endl;
-  cout << "  nRays: " << conf.nRays << endl;
-  cout << endl;
   
   int ul_bytes = conf.nMicrolenses * sizeof(Microlens);
   int ray_bytes = conf.nRays * sizeof(Ray);

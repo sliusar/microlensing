@@ -40,4 +40,24 @@ Configuration::Configuration(const char* filename) {
     image_y1_right = image_center_y1 + image_y_width/2;
     image_y2_bottom = image_center_y2 - image_y_height/2;
     image_y2_top = image_center_y2 + image_y_height/2;
-};
+}
+
+void Configuration::display() {
+    cout << "CONFIGURATION:" << endl;
+    cout << "--- GLS ---" << endl;
+    cout << "  sigma: " << sigma << endl;
+    cout << "  sigma_c: " << sigma_c << endl;
+    cout << "  gamma: " << gamma << endl;
+    cout << "  R_field: " << R_field << endl;
+    cout << "  M_avg: " << M_avg << endl;
+    cout << "  nMicrolenses: " << nMicrolenses << endl;
+    cout << "  t_max: " << t_max << endl;
+    cout << "  dt: " << dt << endl;
+    cout << endl;
+  
+    cout << "--- Ray tracing ---" << endl;
+    cout << "  R_rays: " << R_rays << endl;
+    cout << "  dx_rays: " << dx_rays << endl;
+    cout << "  nRays: " << nRays << endl;
+    cout << endl;
+}
