@@ -1,6 +1,10 @@
 #ifndef INCLUDE_COMMON_CUH
 #define INCLUDE_COMMON_CUH
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 #include <iostream>
 #include <fstream>
 #include <math.h>

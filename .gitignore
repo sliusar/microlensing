@@ -4,3 +4,4 @@ obj/*
 orig/*
 .ipynb_checkpoints/
 rays_*
+.vscode
