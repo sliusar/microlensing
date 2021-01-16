@@ -3,3 +3,4 @@ bin/*
 obj/*
 orig/*
 .ipynb_checkpoints/
+ray_*
