@@ -116,8 +116,11 @@ int main(const int argc, const char** argv) {
   Ray *rays = (Ray*)malloc(ray_bytes);
   //float *image = (float*)malloc(image_bytes);
 
+  StartTimer();
   randomiseMicrolenses(microlenses, conf.nMicrolenses, conf.R_field);  
+  cout << "Creating microlensing field in " << GetElapsedTime() << " ms" << endl;
   populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
+  cout << "Defining rays field in " << GetElapsedTime() << " ms" << endl;
 
   //memset(image, 0, sizeof(image));
 
