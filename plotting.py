@@ -56,20 +56,24 @@ y = rays_y[:,1][m]
 density_scatter(x, y, bins=[200, 200])
 
 rays_y = np.loadtxt("rays_y_0.00.dat")
-m = np.logical_and(np.abs(rays_y[:,0]) <= 20, np.abs(rays_y[:,1]) <= 20)
-x = rays_y[:,0][m]
-y = rays_y[:,1][m]
-density_scatter(x, y, bins=[200, 200])
-
-rays_y = np.loadtxt("rays_y_0.00.dat")
 m = np.logical_and(np.abs(rays_y[:,0]) <= 10, np.abs(rays_y[:,1]) <= 10)
 x = rays_y[:,0][m]
 y = rays_y[:,1][m]
 density_scatter(x, y, bins=[200, 200])
 
-image = np.loadtxt("image.dat")
+rays_y = np.loadtxt("rays_y_0.00.dat")
+m = np.logical_and(np.abs(rays_y[:,0]) <= 20, np.abs(rays_y[:,1]) <= 20)
+x = rays_y[:,0][m]
+y = rays_y[:,1][m]
+density_scatter(x, y, bins=[200, 200])
 
-plt.imshow(image.reshape([500,500]))
-plt.xlim([])
+
+
+
+
+image = np.loadtxt("image.dat")
+fig = plt.figure(figsize=(10, 10))
+plt.imshow(image.reshape([500,500]), origin='lower')
+plt.show()
 
 

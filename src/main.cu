@@ -178,8 +178,8 @@ int main(const int argc, const char** argv) {
     outf.close();
 
     outf.open("image.dat");
-    for (int i = 0; i < conf.image_width; i++) {
-      for (int j = 0; j < conf.image_height; j++) {
+    for (int j = 0; j < conf.image_height; j++) {
+      for (int i = 0; i < conf.image_width; i++) {
         outf << image[i * conf.image_width + j] << endl;
       }
     }
