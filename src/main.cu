@@ -17,23 +17,20 @@ using namespace std;
 
 struct Microlens { float x1, x2, v1, v2, m; } ;
 struct Ray { float x1, x2; };
-struct Configuration { 
-  float sigma, sigma_c, gamma, R_field, M_avg, R_rays, dx_rays;
-  int nMicrolenses, nRays, nRays1d;
-  float dt, t_max;
-  int image_height, image_width;
-  float image_y_height, image_y_width, image_center_y1, image_center_y2, image_pixel_y1_size, image_pixel_y2_size, image_y1_left, image_y2_bottom, image_y1_right, image_y2_top;
-};
 
 float distance(float x, float y, float center_x, float center_y) {
   return sqrt(pow(x - center_x, 2) + pow(y - center_y, 2));
+}
+
+float distance(float x, float y) {
+  return distance(x, y, 0, 0);
 }
 
 void randomiseMicrolenses(Microlens *ul, int n, float R) {
   for (int i = 0; i < n; i++) {
     float x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
     float x2 = 2 * R * (rand() / (float)RAND_MAX) - R;
-    while (distance(x1, x2, 0, 0) > R) {
+    while (distance(x1, x2) > R) {
       x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
       x2 = 2 * R * (rand() / (float)RAND_MAX) - R;
     }
@@ -45,7 +42,7 @@ void populateRays(Ray *rays, int nRays, float R_rays, float dx_rays) {
   int counter = 0;
   for (float x1 = - R_rays; x1 <= R_rays; x1 += dx_rays) {
     for (float x2 = - R_rays; x2 <= R_rays; x2 += dx_rays) {
-      rays[counter++] = {.x1 = x1, .x2 = x2};
+      if (distance(x1, x2) <= R_rays && counter < nRays) rays[counter++] = {.x1 = x1, .x2 = x2};
     }
   }
 }
@@ -85,45 +82,32 @@ __global__ void buildMap(Ray *rays, const Configuration c, float *image) {
 }
 
 int main(const int argc, const char** argv) {
-  //srand (time(NULL));
-  Configuration conf;
-  // Microlensing field configuration
-  conf.sigma = 0.5;
-  conf.sigma_c = 0;
-  conf.gamma = 0.1;
-  conf.R_field = 100;
-  conf.M_avg = 1.0;
-  conf.nMicrolenses = conf.sigma * M_PI * conf.R_field * conf.R_field / M_PI * conf.M_avg;
-  printf("sigma: %f\nsigma_c: %f\ngamma: %f\nR: %f\nM_avg: %f\nN: %d\n", conf.sigma, conf.sigma_c, conf.gamma, conf.R_field, conf.M_avg, conf.nMicrolenses);
+  if (argc != 2) {
+    cerr << "Usage:\n\t" << argv[0] << " configuration.yaml" << endl;
+    return 1;
+  }
 
-  // Rays configuration
-  conf.R_rays = 100;
-  conf.dx_rays = 0.1;
-  conf.nRays1d = 2 * conf.R_rays / conf.dx_rays + 1;
-  conf.nRays = pow(conf.nRays1d, 2);
+  Configuration conf(argv[1]);
+  if (conf.randomise_with_time) srand(time(NULL));
 
-  // Iterations calculator
-  conf.dt = 0.1;
-  conf.t_max = 0.1;
+  cout << "CONFIGURATION:" << endl;
+  cout << "--- GLS ---" << endl;
+  cout << "  sigma: " << conf.sigma << endl;
+  cout << "  sigma_c: " << conf.sigma_c << endl;
+  cout << "  gamma: " << conf.gamma << endl;
+  cout << "  R_field: " << conf.R_field << endl;
+  cout << "  M_avg: " << conf.M_avg << endl;
+  cout << "  nMicrolenses: " << conf.nMicrolenses << endl;
+  cout << "  t_max: " << conf.t_max << endl;
+  cout << "  dt: " << conf.dt << endl;
+  cout << endl;
 
-  // Image definitions
-  conf.image_width = 500;
-  conf.image_height = 500;
+  cout << "--- Ray tracing ---" << endl;
+  cout << "  R_rays: " << conf.R_rays << endl;
+  cout << "  dx_rays: " << conf.dx_rays << endl;
+  cout << "  nRays: " << conf.nRays << endl;
+  cout << endl;
   
-  conf.image_y_width = 30.0;
-  conf.image_y_height = 30.0;
-  
-  conf.image_center_y1 = 0.0;
-  conf.image_center_y2 = 0.0;
-
-  conf.image_pixel_y1_size = conf.image_y_width / conf.image_width;
-  conf.image_pixel_y2_size = conf.image_y_height / conf.image_height;
-
-  conf.image_y1_left = conf.image_center_y1 - conf.image_y_width/2;
-  conf.image_y1_right = conf.image_center_y1 + conf.image_y_width/2;
-  conf.image_y2_bottom = conf.image_center_y2 - conf.image_y_height/2;
-  conf.image_y2_top = conf.image_center_y2 + conf.image_y_height/2;
-
   int ul_bytes = conf.nMicrolenses * sizeof(Microlens);
   int ray_bytes = conf.nRays * sizeof(Ray);
   int image_bytes = conf.image_height * conf.image_width * sizeof(float);
@@ -132,8 +116,9 @@ int main(const int argc, const char** argv) {
   Ray *rays = (Ray*)malloc(ray_bytes);
   //float *image = (float*)malloc(image_bytes);
 
-  randomiseMicrolenses(microlenses, conf.nMicrolenses, conf.R_field);
+  randomiseMicrolenses(microlenses, conf.nMicrolenses, conf.R_field);  
   populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
+
   //memset(image, 0, sizeof(image));
 
   Microlens *ul_buf;
@@ -182,5 +167,6 @@ int main(const int argc, const char** argv) {
   
   cudaFree(ul_buf);
   cudaFree(ray_buf);
+
   return 0;
 }

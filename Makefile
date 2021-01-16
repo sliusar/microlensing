@@ -11,7 +11,7 @@ OBJEXT      := o
 
 CC          := nvcc -O3 #--use_fast_math arch=compute_61,code=sm_61 -gencode
 CFLAGS      := 
-LIB         := 
+LIB         := -lyaml-cpp
 INC         := -I$(INCDIR) -I/usr/local/include
 INCDEP      := -I$(INCDIR)
 

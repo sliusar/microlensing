@@ -1,16 +1,16 @@
-#ifndef COMMON_CUH
-#define COMMON_CUH
+#ifndef INCLUDE_COMMON_CUH
+#define INCLUDE_COMMON_CUH
 
 #include <iostream>
+#include <fstream>
 #include <math.h>
 #include <string>
+#include "yaml-cpp/yaml.h"
 
 #ifdef __CUDACC__
-#define CUDA_CALLABLE_MEMBER __host__ __device__
+    #define CUDA_CALLABLE_MEMBER __host__ __device__
 #else
-#define CUDA_CALLABLE_MEMBER
+    #define CUDA_CALLABLE_MEMBER
 #endif 
 
-#endif /* !COMMON_CUH */
-
-// TODO: Separate C++ and Cuda, e.g. like in https://www.crossfire.nu/tutorials/179/mixing-cuda-and-c
+#endif /* !INCLUDE_COMMON_CUH */
