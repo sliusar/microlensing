@@ -24,5 +24,9 @@ image_center_y2: 0.0
 # General configuration
 randomise_with_time: false
 
+## Ray tracing execution 
 # CPU time: 277.818 s # 6x over GPU
 # GPU time: 45.9759 s
+
+## Map calculations
+# GPU time: 32.1434 s

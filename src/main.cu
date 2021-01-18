@@ -8,7 +8,7 @@ using namespace std;
 #define CUDA_BLOCK_SIZE_2d 32
 
 struct Microlens { float x1, x2, v1, v2, m; } ;
-struct Ray { float x1, x2; };
+struct Ray { float x1, x2, d; };
 
 float distance(float x, float y, float center_x, float center_y) {
   return sqrt(pow(x - center_x, 2) + pow(y - center_y, 2));
@@ -34,7 +34,7 @@ void populateRays(Ray *rays, int nRays, float R_rays, float dx_rays) {
   int counter = 0;
   for (float x1 = - R_rays; x1 <= R_rays; x1 += dx_rays) {
     for (float x2 = - R_rays; x2 <= R_rays; x2 += dx_rays) {
-      if (distance(x1, x2) <= R_rays && counter < nRays) rays[counter++] = {.x1 = x1, .x2 = x2};
+      if (distance(x1, x2) <= R_rays && counter < nRays) rays[counter++] = {.x1 = x1, .x2 = x2, .d = 0.0};
     }
   }
 }
@@ -64,6 +64,7 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
     }
     rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
     rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
+    rays[ri].d = hypotf(rays[ri].x1 - c.image_center_y1, rays[ri].x2 - c.image_center_y2);
   }
 }
 
@@ -83,6 +84,7 @@ void deflectRaysCPU(Microlens *uls, Ray *rays, const Configuration c, const floa
     }
     rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
     rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
+    rays[ri].d = distance(rays[ri].x1, rays[ri].x2);
   }
 }
 
@@ -96,9 +98,11 @@ __global__ void buildMap(Ray *rays, const Configuration c, float *image) {
     float y2_max = y2_min + c.image_pixel_y1_size;
     for (int i = 0; i < c.nRays; i++) {
       Ray ray = rays[i];
-      if (y1_min <= ray.x1 && ray.x1 < y1_max) {
-        if (y2_min <= ray.x2 && ray.x2 < y2_max) {
-          image[col * c.image_width + row]++;
+      if (ray.d <= c.image_diagonal_size) {
+        if (y1_min <= ray.x1 && ray.x1 < y1_max) {
+          if (y2_min <= ray.x2 && ray.x2 < y2_max) {
+            image[col * c.image_width + row]++;
+          }
         }
       }
     }
@@ -166,17 +170,18 @@ int main(const int argc, const char** argv) {
 
     char filename[32];
     sprintf(filename, "rays_y_%.2f.dat", t);
-    cout << "Writing data to " << filename << " ..."<< endl;
+    cout << "  Writing data to " << filename << " ..."<< endl;
     outf.open(filename);
+    cout << conf.image_diagonal_size << endl;
     for (int i = 0; i <= conf.nRays; i++) {
-      if (rays[i].x1 >= -20 && rays[i].x1 <= 20) {
-        if (rays[i].x2 >= -20 && rays[i].x2 <= 20) {
-          outf << rays[i].x1 << " " << rays[i].x2 << endl;
-        }
+      if (rays[i].d <= conf.image_diagonal_size && rays[i].x1 >= -20 && rays[i].x1 <= 20 && rays[i].x2 >= -20 && rays[i].x2 <= 20) {
+        outf << rays[i].x1 << " " << rays[i].x2 << endl;
       }
     }
     outf.close();
+    cout << "    done in " << GetElapsedTime() << " s" << endl;
 
+    cout << "  Writing data to image.dat ..."<< endl;
     outf.open("image.dat");
     for (int j = 0; j < conf.image_height; j++) {
       for (int i = 0; i < conf.image_width; i++) {
@@ -184,6 +189,7 @@ int main(const int argc, const char** argv) {
       }
     }
     outf.close();
+    cout << "    done in " << GetElapsedTime() << " s" << endl;
 
     break;
   }

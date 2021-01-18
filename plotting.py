@@ -77,3 +77,5 @@ plt.imshow(image.reshape([500,500]), origin='lower')
 plt.show()
 
 
+
+

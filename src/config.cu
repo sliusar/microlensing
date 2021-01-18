@@ -40,6 +40,8 @@ Configuration::Configuration(const char* filename) {
     image_y1_right = image_center_y1 + image_y_width/2;
     image_y2_bottom = image_center_y2 - image_y_height/2;
     image_y2_top = image_center_y2 + image_y_height/2;
+
+    image_diagonal_size = sqrt(pow(image_y_width,2) + pow(image_y_height,2));
 }
 
 void Configuration::display() {
