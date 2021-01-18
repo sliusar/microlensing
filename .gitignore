@@ -3,5 +3,6 @@ bin/*
 obj/*
 orig/*
 .ipynb_checkpoints/
-rays_*
+rays_*dat
+image*dat
 .vscode
