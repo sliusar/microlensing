@@ -9,7 +9,7 @@ t_max: 0.1
 
 # Rays configuration
 R_rays: 100
-dx_rays: 0.05
+dx_rays: 0.02
 
 # Image definitions
 image_width: 500

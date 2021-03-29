@@ -4,6 +4,9 @@
 
 using namespace std;
 
+#define cudaDeviceScheduleBlockingSync 0x04
+#define cudaEventBlockingSync 0x01
+
 #define CUDA_BLOCK_SIZE 1024
 #define CUDA_BLOCK_SIZE_2d 32
 
@@ -148,6 +151,11 @@ int main(const int argc, const char** argv) {
 
   int nBlocks = (conf.nRays + CUDA_BLOCK_SIZE - 1) / CUDA_BLOCK_SIZE;
 
+  //From https://stackoverflow.com/questions/11888772/when-to-call-cudadevicesynchronize
+  //  kernel1<<<X,Y>>>(...); // kernel start execution, CPU continues to next statement
+  //  kernel2<<<X,Y>>>(...); // kernel is placed in queue and will start after kernel1 finishes, CPU continues to next statement
+  //  cudaMemcpy(...); // CPU blocks until memory is copied, memory copy starts only after kernel2 finishes
+
   ofstream outf;
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
     cout << "Iteration t: " << t << endl;
@@ -156,7 +164,7 @@ int main(const int argc, const char** argv) {
     deflectRays<<<nBlocks, CUDA_BLOCK_SIZE>>>(ul_buf, ray_buf, conf, t); // compute ray deflections
     //deflectRaysCPU(microlenses, rays, conf, t); // CPU version
     cudaMemcpy(rays, ray_buf, ray_bytes, cudaMemcpyDeviceToHost);
-    cudaDeviceSynchronize();
+    //cudaDeviceSynchronize();
     cout << "    done in " << GetElapsedTime() << " s" << endl;
     
 
