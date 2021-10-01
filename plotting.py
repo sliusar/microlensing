@@ -86,11 +86,11 @@ np.sum(image)
 
 
 # +
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(10,10))
 
 ims = []
 
-for i in np.arange(0, 2.65, 0.05):
+for i in np.arange(0, 10, 0.1):
     filename = "image_%.2f.dat" % i
     image = np.loadtxt(filename).reshape([500,500])
     print(filename, np.sum(image))
@@ -106,6 +106,7 @@ for i in np.arange(0, 2.65, 0.05):
     img = np.zeros_like(image)
     img[image > 0] = np.log(image[image > 0])
     im = ax.imshow(img, extent=extent, origin='lower')
+    ax.set_title("t=%s" % i)
     ims.append([im])
 
 ani = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat_delay=1000)

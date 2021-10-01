@@ -45,30 +45,6 @@ void populateRays(Ray *rays, int nRays, float R_rays, float dx_rays) {
   }
 }
 
-float dst2_inv_cpu(float x, float y) {
-  return 1 / (pow(x, 2) + pow(y, 2));
-}
-
-void deflectRaysCPU(Microlens *uls, Ray *rays, const Configuration c, const float t) {
-  for (int ri = 0; ri < c.nRays; ri++) {
-    float ray_x1 = rays[ri].x1;
-    float ray_x2 = rays[ri].x2;
-    float sum_x1 = 0.0;
-    float sum_x2 = 0.0;
-    for (int i = 0; i < c.nMicrolenses; i++) {
-      Microlens ul = uls[i];
-      float m_x1 = ray_x1 - ul.x1 - (ul.v1 * t);
-      float m_x2 = ray_x2 - ul.x2 - (ul.v2 * t);
-      float ri = ul.m * dst2_inv_cpu(m_x1, m_x2);
-      sum_x1 += m_x1 * ri;
-      sum_x2 += m_x2 * ri;
-    }
-    rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
-    rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
-    rays[ri].d = distance(rays[ri].x1, rays[ri].x2);
-  }
-}
-
 __device__ float dst2_inv(float x, float y) {
   return rhypotf(x, y) * rhypotf(x, y);
 }
@@ -165,15 +141,6 @@ int main(const int argc, const char** argv) {
     cudaDeviceSynchronize();
     cout << GetElapsedTime() << " s" << endl;
     
-    //cout << "  Executing amplification map calculation ... " << flush;
-    //StartTimer();
-    //dim3 nBlocks_image = dim3((conf.image_width + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d, (conf.image_height + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d);
-    //buildMap<<<nBlocks_image, dim3(CUDA_BLOCK_SIZE_2d, CUDA_BLOCK_SIZE_2d)>>>(ray_buf, conf, image_buf); // build map from rays
-    //cudaMemcpy(image, image_buf, image_bytes, cudaMemcpyDeviceToHost);
-    //cudaDeviceSynchronize();
-    //cout << GetElapsedTime() << " s" << endl;
-
-    //char filename[32];
     //sprintf(filename, "rays_y_%.2f.dat", t);
     //cout << "  Writing data to " << filename << " ... " << flush;
     //outf.open(filename);
