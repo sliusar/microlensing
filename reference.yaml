@@ -30,3 +30,9 @@ randomise_with_time: false
 
 ## Map calculations
 # GPU time: 32.1434 s
+
+## Writing data to rays_y_0.00.dat ...
+# Total time: 7.11982 s
+
+## Writing data to image.dat ...
+# Total time: 0.492798 s

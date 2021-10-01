@@ -42,33 +42,8 @@ void populateRays(Ray *rays, int nRays, float R_rays, float dx_rays) {
   }
 }
 
-__device__ float dst2_inv(float x, float y) {
-  return pow(rhypotf(x, y), 2);
-}
-
 float dst2_inv_cpu(float x, float y) {
   return 1 / (pow(x, 2) + pow(y, 2));
-}
-
-__global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t) {
-  int ri = blockDim.x * blockIdx.x + threadIdx.x;
-  if (ri < c.nRays) {
-    float ray_x1 = rays[ri].x1;
-    float ray_x2 = rays[ri].x2;
-    float sum_x1 = 0.0;
-    float sum_x2 = 0.0;
-    for (int i = 0; i < c.nMicrolenses; i++) {
-      Microlens ul = uls[i];
-      float m_x1 = ray_x1 - ul.x1 - (ul.v1 * t);
-      float m_x2 = ray_x2 - ul.x2 - (ul.v2 * t);
-      float ri = ul.m * dst2_inv(m_x1, m_x2);
-      sum_x1 += m_x1 * ri;
-      sum_x2 += m_x2 * ri;
-    }
-    rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
-    rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
-    rays[ri].d = hypotf(rays[ri].x1 - c.image_center_y1, rays[ri].x2 - c.image_center_y2);
-  }
 }
 
 void deflectRaysCPU(Microlens *uls, Ray *rays, const Configuration c, const float t) {
@@ -88,6 +63,31 @@ void deflectRaysCPU(Microlens *uls, Ray *rays, const Configuration c, const floa
     rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
     rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
     rays[ri].d = distance(rays[ri].x1, rays[ri].x2);
+  }
+}
+
+__device__ float dst2_inv(float x, float y) {
+  return powf(rhypotf(x, y), 2);
+}
+
+__global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t) {
+  int ri = blockDim.x * blockIdx.x + threadIdx.x;
+  if (ri < c.nRays) {
+    float ray_x1 = rays[ri].x1;
+    float ray_x2 = rays[ri].x2;
+    float sum_x1 = 0.0;
+    float sum_x2 = 0.0;
+    for (int i = 0; i < c.nMicrolenses; i++) {
+      //Microlens ul = ;
+      float m_x1 = ray_x1 - uls[i].x1 - (uls[i].v1 * t);
+      float m_x2 = ray_x2 - uls[i].x2 - (uls[i].v2 * t);
+      float ri = uls[i].m * dst2_inv(m_x1, m_x2);
+      sum_x1 += m_x1 * ri;
+      sum_x2 += m_x2 * ri;
+    }
+    rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
+    rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
+    rays[ri].d = hypotf(rays[ri].x1 - c.image_center_y1, rays[ri].x2 - c.image_center_y2);
   }
 }
 
@@ -164,7 +164,7 @@ int main(const int argc, const char** argv) {
     deflectRays<<<nBlocks, CUDA_BLOCK_SIZE>>>(ul_buf, ray_buf, conf, t); // compute ray deflections
     //deflectRaysCPU(microlenses, rays, conf, t); // CPU version
     cudaMemcpy(rays, ray_buf, ray_bytes, cudaMemcpyDeviceToHost);
-    //cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
     cout << "    done in " << GetElapsedTime() << " s" << endl;
     
 
@@ -180,7 +180,7 @@ int main(const int argc, const char** argv) {
     sprintf(filename, "rays_y_%.2f.dat", t);
     cout << "  Writing data to " << filename << " ..."<< endl;
     outf.open(filename);
-    cout << conf.image_diagonal_size << endl;
+    //cout << conf.image_diagonal_size << endl;
     for (int i = 0; i <= conf.nRays; i++) {
       if (rays[i].d <= conf.image_diagonal_size && rays[i].x1 >= -20 && rays[i].x1 <= 20 && rays[i].x2 >= -20 && rays[i].x2 <= 20) {
         outf << rays[i].x1 << " " << rays[i].x2 << endl;
