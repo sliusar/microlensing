@@ -112,7 +112,7 @@ ani = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat_delay
 
 # To save the animation, use e.g.
 
-ani.save("moving_stars.gif")
+ani.save("moving_stars.mp4")
 #
 # or
 #

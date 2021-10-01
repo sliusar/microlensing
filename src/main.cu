@@ -135,6 +135,9 @@ int main(const int argc, const char** argv) {
   cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
   cout << GetElapsedTime() << " s" << endl;
   
+  cudaMalloc(&image_buf, image_bytes);
+  cudaMalloc(&ray_buf, ray_bytes);
+
   int nBlocks = (conf.nRays + CUDA_BLOCK_SIZE - 1) / CUDA_BLOCK_SIZE;
 
   //From https://stackoverflow.com/questions/11888772/when-to-call-cudadevicesynchronize
@@ -143,18 +146,17 @@ int main(const int argc, const char** argv) {
   //  cudaMemcpy(...); // CPU blocks until memory is copied, memory copy starts only after kernel2 finishes
 
   ofstream outf;
+  int counter = 0;
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
     
     memset(image, 0, image_bytes);
-    cudaMalloc(&image_buf, image_bytes);
     cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
 
-    populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
-    cudaMalloc(&ray_buf, ray_bytes);
+    populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);    
     cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
   
-    cout << ">> Iteration t: " << t << " <<" << endl;
-    cout << "  Executing ray tracing ... " << flush;
+    cout << endl << ">>> Iteration #" << ++counter << ", t=" << t << endl;
+    cout << "    Executing ray tracing ... " << flush;
     StartTimer();
     deflectRays<<<nBlocks, CUDA_BLOCK_SIZE>>>(ul_buf, ray_buf, conf, t, image_buf); // compute ray deflections
     //deflectRaysCPU(microlenses, rays, conf, t); // CPU version
@@ -163,7 +165,6 @@ int main(const int argc, const char** argv) {
     cudaDeviceSynchronize();
     cout << GetElapsedTime() << " s" << endl;
     
-
     //cout << "  Executing amplification map calculation ... " << flush;
     //StartTimer();
     //dim3 nBlocks_image = dim3((conf.image_width + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d, (conf.image_height + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d);
@@ -185,7 +186,7 @@ int main(const int argc, const char** argv) {
     //cout << GetElapsedTime() << " s" << endl;
 
     sprintf(filename, "image_%.2f.dat", t);
-    cout << "  Writing data to " << filename << " ... " << flush;
+    cout << "    Writing data to " << filename << " ... " << flush;
     outf.open(filename);
     outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;
     outf << "# y in (" << conf.image_y2_bottom << ", " << conf.image_y2_top << ")" << endl;
