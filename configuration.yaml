@@ -15,8 +15,8 @@ dx_rays: 0.02
 image_width: 500
 image_height: 500
 
-image_y_width: 40.0
-image_y_height: 40.0
+image_y1_width: 40.0
+image_y2_height: 40.0
 
 image_center_y1: 0.0
 image_center_y2: 0.0
