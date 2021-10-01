@@ -106,7 +106,7 @@ for i in np.arange(0, 10, 0.1):
     img = np.zeros_like(image)
     img[image > 0] = np.log(image[image > 0])
     im = ax.imshow(img, extent=extent, origin='lower')
-    ax.set_title("t=%s" % i)
+    ax.set_xlabel("t=%s" % i)
     ims.append([im])
 
 ani = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat_delay=1000)
