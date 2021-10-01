@@ -22,14 +22,17 @@ float distance(float x, float y) {
 }
 
 void randomiseMicrolenses(Microlens *ul, int n, float R) {
+  float speed_range_radius = 1;
   for (int i = 0; i < n; i++) {
     float x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
     float x2 = 2 * R * (rand() / (float)RAND_MAX) - R;
+    float v1 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
+    float v2 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
     while (distance(x1, x2) > R) {
       x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
       x2 = 2 * R * (rand() / (float)RAND_MAX) - R;
     }
-    ul[i] = {.x1 = x1, .x2 = x2, .v1 = 0.0, .v2 = 0.0, .m = 1.0 };
+    ul[i] = {.x1 = x1, .x2 = x2, .v1 = v1, .v2 = v2, .m = 1.0 };
   }
 }
 
@@ -86,33 +89,10 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
     }
     rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
     rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
-    rays[ri].d = hypotf(rays[ri].x1 - c.image_center_y1, rays[ri].x2 - c.image_center_y2);
-    if (rays[ri].d < c.image_diagonal_size){
-      int x = lrintf(rays[ri].x1 / c.image_pixel_y1_size + c.image_center_y1);
-      int y = lrintf(rays[ri].x2 / c.image_pixel_y2_size + c.image_center_y2);
-      if (x >= 0 && x < c.image_width && y >= 0 && y < c.image_height) atomicAdd(&image[x * c.image_width + y], 1.0);
-    }
-  }
-}
-
-__global__ void buildMap(Ray *rays, const Configuration c, float *image) {
-  int row = blockIdx.y * blockDim.y + threadIdx.y;
-  int col = blockIdx.x * blockDim.x + threadIdx.x;
-  if (col < c.image_width && row < c.image_height) {
-    float y1_min = c.image_y1_left + col * c.image_pixel_y1_size;
-    float y1_max = y1_min + c.image_pixel_y1_size;
-    float y2_min = c.image_y2_bottom + row * c.image_pixel_y2_size;
-    float y2_max = y2_min + c.image_pixel_y1_size;
-    for (int i = 0; i < c.nRays; i++) {
-      Ray ray = rays[i];
-      if (ray.d <= c.image_diagonal_size) {
-        if (y1_min <= ray.x1 && ray.x1 < y1_max) {
-          if (y2_min <= ray.x2 && ray.x2 < y2_max) {
-            image[col * c.image_width + row]++;
-          }
-        }
-      }
-    }
+    //rays[ri].d = hypotf(rays[ri].x1 - c.image_center_y1, rays[ri].x2 - c.image_center_y2);
+    int x = lrintf((rays[ri].x1 - c.image_y1_left) / c.image_pixel_y1_size);
+    int y = lrintf((rays[ri].x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
+    if (x >= 0 && x < c.image_width && y >= 0 && y < c.image_height) atomicAdd(&image[x * c.image_width + y], 1.0);
   }
 }
 
@@ -121,6 +101,8 @@ int main(const int argc, const char** argv) {
     cerr << "Usage:\n\t" << argv[0] << " configuration.yaml" << endl;
     return 1;
   }
+
+  char filename[32];
 
   Configuration conf(argv[1]);
   conf.display();
@@ -134,25 +116,25 @@ int main(const int argc, const char** argv) {
   Ray *rays = (Ray*)malloc(ray_bytes);
   float *image = (float*)malloc(image_bytes);
 
+  Microlens *ul_buf;
+  float *image_buf;
+  Ray *ray_buf;
+
+  
+  cout << "Creating microlensing field ... " << flush;
   StartTimer();
   randomiseMicrolenses(microlenses, conf.nMicrolenses, conf.R_field);  
-  cout << "Creating microlensing field in " << GetElapsedTime() << " s" << endl;
-  populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
-  cout << "Defining rays field in " << GetElapsedTime() << " s" << endl;
-  memset(image, 0, sizeof(image));
-
-  Microlens *ul_buf;
   cudaMalloc(&ul_buf, ul_bytes);
   cudaMemcpy(ul_buf, microlenses, ul_bytes, cudaMemcpyHostToDevice);
-
-  Ray *ray_buf;
+  cout << GetElapsedTime() << " s" << endl;
+  
+  cout << "Defining rays field in ... " << flush;
+  StartTimer();
+  populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
   cudaMalloc(&ray_buf, ray_bytes);
   cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
-
-  float *image_buf;
-  cudaMalloc(&image_buf, image_bytes);
-  cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
-
+  cout << GetElapsedTime() << " s" << endl;
+  
   int nBlocks = (conf.nRays + CUDA_BLOCK_SIZE - 1) / CUDA_BLOCK_SIZE;
 
   //From https://stackoverflow.com/questions/11888772/when-to-call-cudadevicesynchronize
@@ -162,56 +144,68 @@ int main(const int argc, const char** argv) {
 
   ofstream outf;
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
-    cout << "Iteration t: " << t << endl;
-    cout << "  Executing ray tracing ... " << endl;
+    
+    memset(image, 0, image_bytes);
+    cudaMalloc(&image_buf, image_bytes);
+    cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
+
+    populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
+    cudaMalloc(&ray_buf, ray_bytes);
+    cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
+  
+    cout << ">> Iteration t: " << t << " <<" << endl;
+    cout << "  Executing ray tracing ... " << flush;
     StartTimer();
     deflectRays<<<nBlocks, CUDA_BLOCK_SIZE>>>(ul_buf, ray_buf, conf, t, image_buf); // compute ray deflections
     //deflectRaysCPU(microlenses, rays, conf, t); // CPU version
     cudaMemcpy(rays, ray_buf, ray_bytes, cudaMemcpyDeviceToHost);
     cudaMemcpy(image, image_buf, image_bytes, cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
-    cout << "    done in " << GetElapsedTime() << " s" << endl;
+    cout << GetElapsedTime() << " s" << endl;
     
 
-    //cout << "  Executing amplification map calculation ... " << endl;
+    //cout << "  Executing amplification map calculation ... " << flush;
     //StartTimer();
     //dim3 nBlocks_image = dim3((conf.image_width + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d, (conf.image_height + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d);
     //buildMap<<<nBlocks_image, dim3(CUDA_BLOCK_SIZE_2d, CUDA_BLOCK_SIZE_2d)>>>(ray_buf, conf, image_buf); // build map from rays
     //cudaMemcpy(image, image_buf, image_bytes, cudaMemcpyDeviceToHost);
     //cudaDeviceSynchronize();
-    //cout << "    done in " << GetElapsedTime() << " s" << endl;
+    //cout << GetElapsedTime() << " s" << endl;
 
-    char filename[32];
-    sprintf(filename, "rays_y_%.2f.dat", t);
-    cout << "  Writing data to " << filename << " ..."<< endl;
+    //char filename[32];
+    //sprintf(filename, "rays_y_%.2f.dat", t);
+    //cout << "  Writing data to " << filename << " ... " << flush;
+    //outf.open(filename);
+    //for (int i = 0; i <= conf.nRays; i++) {
+    //  if (rays[i].d <= conf.image_diagonal_size && rays[i].x1 >= -30 && rays[i].x1 <= 30 && rays[i].x2 >= -30 && rays[i].x2 <= 30) {
+    //    outf << rays[i].x1 << " " << rays[i].x2 << endl;
+    //  }
+    //}
+    //outf.close();
+    //cout << GetElapsedTime() << " s" << endl;
+
+    sprintf(filename, "image_%.2f.dat", t);
+    cout << "  Writing data to " << filename << " ... " << flush;
     outf.open(filename);
-    //cout << conf.image_diagonal_size << endl;
-    for (int i = 0; i <= conf.nRays; i++) {
-      if (rays[i].d <= conf.image_diagonal_size && rays[i].x1 >= -20 && rays[i].x1 <= 20 && rays[i].x2 >= -20 && rays[i].x2 <= 20) {
-        outf << rays[i].x1 << " " << rays[i].x2 << endl;
-      }
-    }
-    outf.close();
-    cout << "    done in " << GetElapsedTime() << " s" << endl;
+    outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;
+    outf << "# y in (" << conf.image_y2_bottom << ", " << conf.image_y2_top << ")" << endl;
 
-    cout << "  Writing data to image.dat ..."<< endl;
-    outf.open("image.dat");
     for (int j = 0; j < conf.image_height; j++) {
       for (int i = 0; i < conf.image_width; i++) {
         outf << image[i * conf.image_width + j] << endl;
       }
     }
     outf.close();
-    cout << "    done in " << GetElapsedTime() << " s" << endl;
-
-    break;
+    cout << GetElapsedTime() << " s" << endl;
   }
 
   free(microlenses);
   free(rays);
+  free(image);
   
   cudaFree(ul_buf);
   cudaFree(ray_buf);
+  cudaFree(image_buf);
 
   return 0;
 }

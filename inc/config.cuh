@@ -11,7 +11,7 @@ class Configuration {
         float sigma, sigma_c, gamma, R_field, M_avg, R_rays, dx_rays;
         float dt, t_max;
         int image_height, image_width;
-        float image_y_height, image_y_width, image_center_y1, image_center_y2;
+        float image_y2_height, image_y1_width, image_center_y1, image_center_y2;
         
         int nMicrolenses, nRays; // Calculated        
         float image_pixel_y1_size, image_pixel_y2_size, image_y1_left, image_y2_bottom, image_y1_right, image_y2_top, image_diagonal_size; // Calculated

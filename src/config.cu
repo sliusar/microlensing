@@ -20,8 +20,8 @@ Configuration::Configuration(const char* filename) {
     image_width = config["image_width"].as<int>();
     image_height = config["image_height"].as<int>();
     
-    image_y_width = config["image_y_width"].as<float>();
-    image_y_height = config["image_y_height"].as<float>();
+    image_y1_width = config["image_y1_width"].as<float>();
+    image_y2_height = config["image_y2_height"].as<float>();
     
     image_center_y1 = config["image_center_y1"].as<float>();
     image_center_y2 = config["image_center_y2"].as<float>();
@@ -33,15 +33,15 @@ Configuration::Configuration(const char* filename) {
 
     nRays = (int)ceil((M_PI * pow(R_rays, 2)) / pow(dx_rays, 2));
 
-    image_pixel_y1_size = image_y_width / image_width;
-    image_pixel_y2_size = image_y_height / image_height;
+    image_pixel_y1_size = image_y1_width / image_width;
+    image_pixel_y2_size = image_y2_height / image_height;
   
-    image_y1_left = image_center_y1 - image_y_width/2;
-    image_y1_right = image_center_y1 + image_y_width/2;
-    image_y2_bottom = image_center_y2 - image_y_height/2;
-    image_y2_top = image_center_y2 + image_y_height/2;
+    image_y1_left = image_center_y1 - image_y1_width/2;
+    image_y1_right = image_center_y1 + image_y1_width/2;
+    image_y2_bottom = image_center_y2 - image_y2_height/2;
+    image_y2_top = image_center_y2 + image_y2_height/2;
 
-    image_diagonal_size = sqrt(pow(image_y_width,2) + pow(image_y_height,2));
+    image_diagonal_size = sqrt(pow(image_y1_width,2) + pow(image_y2_height,2));
 }
 
 void Configuration::display() {
@@ -62,4 +62,15 @@ void Configuration::display() {
     cout << "  dx_rays: " << dx_rays << endl;
     cout << "  nRays: " << nRays << endl;
     cout << endl;
+
+    cout << "--- Image debug data ---" << endl;
+    cout << "image_pixel_y1_size: " << image_pixel_y1_size << endl; 
+    cout << "image_pixel_y2_size: " << image_pixel_y2_size << endl; 
+    cout << "image_y1_left: " << image_y1_left << endl; 
+    cout << "image_y1_right: " << image_y1_right << endl; 
+    cout << "image_y2_bottom: " << image_y2_bottom << endl; 
+    cout << "image_y2_top: " << image_y2_top << endl; 
+    cout << "image_diagonal_size: " << image_diagonal_size << endl; 
+    cout << endl;
+
 }
