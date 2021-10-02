@@ -95,6 +95,10 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
   }
 }
 
+__global__ void calculate_lightcurves(const Configuration c, const float t, int *image) {
+
+}
+
 int main(const int argc, const char** argv) {
   if (argc != 2) {
     cerr << "Usage:\n\t" << argv[0] << " configuration.yaml" << endl;
@@ -105,8 +109,12 @@ int main(const int argc, const char** argv) {
 
   Configuration conf(argv[1]);
   conf.display();
-  if (conf.randomise_seed_number < 0) { long _seed = time(NULL); srand(_seed); cout << "Using " << _seed << " to seed a random generator" << endl; }
-  if (conf.randomise_seed_number > 0) { long _seed = conf.randomise_seed_number; srand(_seed); cout << "Using " << _seed << " to seed a random generator" << endl; }
+  if (conf.randomise_seed_number != 0) {
+    long _seed = time(NULL);
+    if (conf.randomise_seed_number < 0) _seed = conf.randomise_seed_number;
+    cout << "Using " << _seed << " to seed the random generator" << endl;
+    srand(_seed);
+  }
   
   int ul_bytes = conf.nMicrolenses * sizeof(Microlens);
   int ray_bytes = conf.nRays * sizeof(Ray);

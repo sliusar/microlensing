@@ -63,7 +63,7 @@ y = rays_y[:,1][m]
 density_scatter(x, y, bins=[500, 500])
 
 
-def get_image_data(filename, gamma=0.6):
+def get_image_data(filename, gamma=0.6, debug=False):
     
     extent = None
     image_size = None
@@ -78,6 +78,12 @@ def get_image_data(filename, gamma=0.6):
         image_size = [int(_s[1]),int(_s[2])]
         extent = [float(_x[1]),float(_x[2]),float(_y[1]),float(_y[2])]
     image = np.loadtxt(filename).reshape(image_size)
+    if (debug):
+        _all = image.shape[0] * image.shape[1]
+        _z = image[image == 0].shape[0]
+        print(f"{filename}")
+        print(f"\tzeros: {_z} ({100 * _z/_all}%)")
+        print(f"\tmean & std: {np.mean(image)} +- {np.std(image)}")
     
     img = np.zeros_like(image)
     img[image > 0] = image[image > 0]**gamma
@@ -88,11 +94,11 @@ def get_image_data(filename, gamma=0.6):
 
 
 # +
-filename1 = "output/reference/image_0.00.dat"
-filename2 = "output/reference/image_0.90.dat"
+filename1 = "output/test/image_0.00.dat"
+filename2 = "output/test/image_1.00.dat"
 
-img1, extent1 = get_image_data(filename1, gamma=1)
-img2, extent2 = get_image_data(filename2, gamma=1)
+img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
+img2, extent2 = get_image_data(filename2, gamma=1, debug=True)
 
 fig, (ax1, ax2) = plt.subplots(figsize=(10,4), ncols=2)
 pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')

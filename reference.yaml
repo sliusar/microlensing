@@ -14,7 +14,7 @@ t_max: 1
 
 # Rays configuration
 R_rays: 100
-dx_rays: 0.05
+dx_rays: 0.03
 
 # Image definitions
 image_width: 1000
@@ -26,6 +26,6 @@ image_y2_height: 30.0
 image_center_y1: 0.0
 image_center_y2: 0.0
 
-## real    0m12.636s
-## user    0m7.562s
-## sys     0m4.993s
+## real    0m35.849s
+## user    0m19.716s
+## sys     0m16.024s
