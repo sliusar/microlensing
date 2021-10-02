@@ -7,4 +7,5 @@ rays_*dat
 images/*.dat
 images/*.mp4
 images/*.gif
+images/moving_stars.mp4
 .vscode
