@@ -11,7 +11,7 @@ using namespace std;
 #define CUDA_BLOCK_SIZE_2d 32
 
 struct Microlens { float x1, x2, v1, v2, m; } ;
-struct Ray { float x1, x2, d; };
+struct Ray { float x1, x2; };
 
 float distance(float x, float y, float center_x, float center_y) {
   return sqrt(pow(x - center_x, 2) + pow(y - center_y, 2));
@@ -47,7 +47,7 @@ void populateRays(Ray *rays, int nRays, float R_rays, float dx_rays) {
   int counter = 0;
   for (float x1 = - R_rays; x1 <= R_rays; x1 += dx_rays) {
     for (float x2 = - R_rays; x2 <= R_rays; x2 += dx_rays) {
-      if (distance(x1, x2) <= R_rays && counter < nRays) rays[counter++] = {.x1 = x1, .x2 = x2, .d = 0.0};
+      if (distance(x1, x2) <= R_rays && counter < nRays) rays[counter++] = {.x1 = x1, .x2 = x2 };
     }
   }
 }
@@ -94,7 +94,7 @@ int main(const int argc, const char** argv) {
     return 1;
   }
 
-  char filename[32];
+  char filename[64], output_folder[64];
 
   Configuration conf(argv[1]);
   conf.display();
@@ -112,6 +112,15 @@ int main(const int argc, const char** argv) {
   float *image_buf;
   Ray *ray_buf;
 
+  struct stat info;
+
+  sprintf(output_folder, "./output/%s/", conf.configuration_id.c_str());
+  if( stat(output_folder , &info ) != 0 ) {
+    if (mkdir(output_folder, 0755) != 0 && errno != EEXIST) {
+      cerr << "Failed to create output folder " << output_folder << endl;
+      return -1;
+    }
+  }
   
   cout << "Creating microlensing field ... " << flush;
   StartTimer();

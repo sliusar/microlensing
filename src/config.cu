@@ -28,11 +28,14 @@ Configuration::Configuration(const char* filename) {
 
     randomise_with_time = config["randomise_with_time"].as<bool>();
 
+    configuration_id = config["configuration_id"].as<string>();
+
     // Recalculated values
     nMicrolenses = sigma * M_PI * R_field * R_field / M_PI * M_avg;
 
     nRays = (int)ceil((M_PI * pow(R_rays, 2)) / pow(dx_rays, 2));
-    nRays_square = (int)ceil(pow(2 * R_rays, 2) / pow(dx_rays, 2));
+    nRays_line = (int)ceil(2 * R_rays / dx_rays);
+    nRays_square = nRays_line * nRays_line;
 
     image_pixel_y1_size = image_y1_width / image_width;
     image_pixel_y2_size = image_y2_height / image_height;
@@ -46,7 +49,7 @@ Configuration::Configuration(const char* filename) {
 }
 
 void Configuration::display() {
-    cout << "CONFIGURATION:" << endl;
+    cout << "CONFIGURATION ID: " << configuration_id << endl;
     cout << "--- GLS ---" << endl;
     cout << "  sigma: " << sigma << endl;
     cout << "  sigma_c: " << sigma_c << endl;
@@ -64,14 +67,15 @@ void Configuration::display() {
     cout << "  nRays: " << nRays << endl;
     cout << endl;
 
-    cout << "--- Image debug data ---" << endl;
-    cout << "image_pixel_y1_size: " << image_pixel_y1_size << endl; 
-    cout << "image_pixel_y2_size: " << image_pixel_y2_size << endl; 
-    cout << "image_y1_left: " << image_y1_left << endl; 
-    cout << "image_y1_right: " << image_y1_right << endl; 
-    cout << "image_y2_bottom: " << image_y2_bottom << endl; 
-    cout << "image_y2_top: " << image_y2_top << endl; 
-    cout << "image_diagonal_size: " << image_diagonal_size << endl; 
-    cout << endl;
-
+    if (DEBUG) {
+        cout << "--- Image debug data ---" << endl;
+        cout << "image_pixel_y1_size: " << image_pixel_y1_size << endl; 
+        cout << "image_pixel_y2_size: " << image_pixel_y2_size << endl; 
+        cout << "image_y1_left: " << image_y1_left << endl; 
+        cout << "image_y1_right: " << image_y1_right << endl; 
+        cout << "image_y2_bottom: " << image_y2_bottom << endl; 
+        cout << "image_y2_top: " << image_y2_top << endl; 
+        cout << "image_diagonal_size: " << image_diagonal_size << endl; 
+        cout << endl;
+    }
 }

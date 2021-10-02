@@ -10,6 +10,8 @@
 #include <math.h>
 #include <string>
 #include "yaml-cpp/yaml.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #ifdef __CUDACC__
     #define CUDA_CALLABLE_MEMBER __host__ __device__
@@ -18,3 +20,5 @@
 #endif 
 
 #endif /* !INCLUDE_COMMON_CUH */
+
+#define DEBUG false

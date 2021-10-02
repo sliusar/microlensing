@@ -1,3 +1,7 @@
+# General configuration
+randomise_with_time: false
+configuration_id: "reference"
+
 # GLS configuration
 sigma: 0.5
 sigma_c: 0
@@ -21,9 +25,6 @@ image_y2_height: 30.0
 image_center_y1: 0.0
 image_center_y2: 0.0
 
-# General configuration
-randomise_with_time: false
-
-## real    0m13.041s
-## user    0m7.726s
-## sys     0m5.827s
+## real    0m12.636s
+## user    0m7.562s
+## sys     0m4.993s

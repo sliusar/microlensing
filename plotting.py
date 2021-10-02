@@ -83,16 +83,20 @@ def get_image_data(filename, gamma=0.6):
 
 
 # +
-img, extent = get_image_data("images/image_0.00.dat", gamma=1)
-fig, ax = plt.subplots(figsize=(10,10))
-pos = ax.imshow(img, interpolation='none', extent=extent, origin='lower')
-fig.colorbar(pos, ax=ax)
-plt.show()
+filename1 = "images/image_0.00.dat"
+filename2 = "images/image_0.90.dat"
 
-img, extent = get_image_data("images/image_0.90.dat", gamma=1)
-fig, ax = plt.subplots(figsize=(10,10))
-pos = ax.imshow(img, interpolation='none', extent=extent, origin='lower')
-fig.colorbar(pos, ax=ax)
+img1, extent1 = get_image_data(filename1, gamma=1)
+img2, extent2 = get_image_data(filename2, gamma=1)
+
+fig, (ax1, ax2) = plt.subplots(figsize=(10,4), ncols=2)
+pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
+pos2 = ax2.imshow(img2, interpolation='bessel', extent=extent2, origin='lower')
+ax1.set_title(filename1)
+ax2.set_title(filename2)
+fig.colorbar(pos1, ax=ax1)
+fig.colorbar(pos2, ax=ax2)
+fig.tight_layout()
 plt.show()
 # -
 
@@ -105,19 +109,19 @@ fig, ax = plt.subplots(figsize=(10,10))
 
 ims = []
 
-for i in np.arange(0, 1, 0.1):
+for i in np.arange(0, 100, 0.1):
     filename = "images/image_%.2f.dat" % i
     img, extent = get_image_data(filename, gamma=1)
     title = plt.text(0.5,1.01, "t=%.2f" % i, ha="center",va="bottom", transform=ax.transAxes, fontsize="large")
     text = ax.text('','','')
-    im = ax.imshow(img, extent=extent, origin='lower')
+    im = ax.imshow(img, extent=extent, origin='lower', interpolation='bicubic')
     ims.append([text, im, title])
 
 ani = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat=False)
 ani.save("images/moving_stars.mp4")
 plt.show()
 # -
-
+ani.save("images/moving_stars.mp4")
 
 
 
