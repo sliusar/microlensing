@@ -16,16 +16,21 @@ t_max: 1
 R_rays: 100
 dx_rays: 0.03
 
-# Image definitions
+# Output image definitions
 image_width: 1000
 image_height: 1000
 
-image_y1_width: 30.0
-image_y2_height: 30.0
+image_y1_width: 50.0
+image_y2_height: 50.0
 
 image_center_y1: 0.0
 image_center_y2: 0.0
 
-## real    0m35.849s
-## user    0m19.716s
-## sys     0m16.024s
+##########################
+# GPU:  MSI P104-100 8GB #
+# real       : 35.806s   #
+# user       : 19.716s   #
+# sys        : 16.024s   #
+# raytracing : 23.0144s  #
+# output:    : 11.7921s  #
+##########################

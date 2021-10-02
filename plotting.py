@@ -94,8 +94,8 @@ def get_image_data(filename, gamma=0.6, debug=False):
 
 
 # +
-filename1 = "output/test/image_0.00.dat"
-filename2 = "output/test/image_1.00.dat"
+filename1 = "output/reference/image_0.00.dat"
+filename2 = "output/reference/image_0.90.dat"
 
 img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
 img2, extent2 = get_image_data(filename2, gamma=1, debug=True)

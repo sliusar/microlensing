@@ -143,15 +143,15 @@ int main(const int argc, const char** argv) {
   randomiseMicrolenses(microlenses, conf.nMicrolenses, conf.R_field);  
   cudaMalloc(&ul_buf, ul_bytes);
   cudaMemcpy(ul_buf, microlenses, ul_bytes, cudaMemcpyHostToDevice);
-  cout << GetElapsedTime() << " s" << endl;
+  cout << GetElapsedTime() << "s" << endl;
   
-  cout << "Defining rays field in ... " << flush;
+  cout << "Creating rays field ... " << flush;
   StartTimer();
   populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
   cudaMalloc(&image_buf, image_bytes);
   cudaMalloc(&ray_buf, ray_bytes);
   cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
-  cout << GetElapsedTime() << " s" << endl;
+  cout << GetElapsedTime() << "s" << endl;
 
   int nBlocks = (conf.nRays + CUDA_BLOCK_SIZE - 1) / CUDA_BLOCK_SIZE;
 
@@ -162,6 +162,9 @@ int main(const int argc, const char** argv) {
 
   ofstream outf;
   int counter = 0;
+  float _t = 0;
+  float t_raytracing = 0;
+  float t_output = 0;
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
     
     memset(image, 0, image_bytes);
@@ -175,7 +178,9 @@ int main(const int argc, const char** argv) {
     cudaMemcpy(rays, ray_buf, ray_bytes, cudaMemcpyDeviceToHost);
     cudaMemcpy(image, image_buf, image_bytes, cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
-    cout << GetElapsedTime() << " s" << endl;
+    _t = GetElapsedTime();
+    t_raytracing += _t;
+    cout << _t << "s" << endl;
     
     //sprintf(filename, "%s/rays_y_%.2f.dat", output_folder, t);
     //cout << "  Writing data to " << filename << " ... " << flush;
@@ -186,7 +191,7 @@ int main(const int argc, const char** argv) {
     //  }
     //}
     //outf.close();
-    //cout << GetElapsedTime() << " s" << endl;
+    //cout << GetElapsedTime() << "s" << endl;
 
     sprintf(filename, "%s/image_%.2f.dat", output_folder, t);
     if (conf.save_images) {
@@ -202,11 +207,17 @@ int main(const int argc, const char** argv) {
         }
       }
       outf.close();
-      cout << GetElapsedTime() << " s" << endl;
+      _t = GetElapsedTime();
+      t_output += _t;
+      cout << _t << "s" << endl;  
     } else {
       cout << "    Skipping writing data to " << filename << " ... " << endl;
     }
   }
+
+  cout << endl << ">>> Run summary:" << endl;
+  cout << "    Raytracking time: " << t_raytracing << "s (mean: " << t_raytracing/counter << "s)" << endl;
+  cout << "    Output time: " << t_output << "s (mean: " << t_output / counter << "s)" << endl;
 
   free(microlenses);
   free(rays);

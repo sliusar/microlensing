@@ -3,8 +3,6 @@ randomise_seed_number: -1 # if -1 than time is used, > 0 than this number is use
 configuration_id: "test"
 save_images: true
 
-
-
 # GLS configuration
 sigma: 0.5
 sigma_c: 0
@@ -18,7 +16,7 @@ t_max: 2
 R_rays: 100
 dx_rays: 0.03
 
-# Image definitions
+# Output image definitions
 image_width: 1000
 image_height: 1000
 
