@@ -32,7 +32,7 @@ Configuration::Configuration(const char* filename) {
     nMicrolenses = sigma * M_PI * R_field * R_field / M_PI * M_avg;
 
     nRays = (int)ceil((M_PI * pow(R_rays, 2)) / pow(dx_rays, 2));
-    nRays_square = (int)ceil(pow(2 * R_rays, 2)) / pow(dx_rays, 2));
+    nRays_square = (int)ceil(pow(2 * R_rays, 2) / pow(dx_rays, 2));
 
     image_pixel_y1_size = image_y1_width / image_width;
     image_pixel_y2_size = image_y2_height / image_height;

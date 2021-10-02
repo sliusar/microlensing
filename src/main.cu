@@ -59,9 +59,6 @@ __device__ float dst2_inv(float x, float y) {
 __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, float *image) {
   int ri = blockDim.x * blockIdx.x + threadIdx.x;
 
-  float lrintf(ri / );
-  //float r_x2 = c.dx_rays * ()
-  //
   float r_x1 = 0;
   float r_x2 = 0;
 
