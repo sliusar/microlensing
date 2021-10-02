@@ -22,17 +22,24 @@ float distance(float x, float y) {
 }
 
 void randomiseMicrolenses(Microlens *ul, int n, float R) {
-  float speed_range_radius = 1;
+  
   for (int i = 0; i < n; i++) {
     float x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
     float x2 = 2 * R * (rand() / (float)RAND_MAX) - R;
-    float v1 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
-    float v2 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
+
     while (distance(x1, x2) > R) {
       x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
       x2 = 2 * R * (rand() / (float)RAND_MAX) - R;
     }
-    ul[i] = {.x1 = x1, .x2 = x2, .v1 = v1, .v2 = v2, .m = 1.0 };
+    ul[i] = {.x1 = x1, .x2 = x2, .v1 = 0.0, .v2 = 0.0, .m = 1.0 };
+  }
+
+  float speed_range_radius = 1;
+  for (int i = 0; i < n; i++) {
+    float v1 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
+    float v2 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
+    ul[i].v1 = v1;
+    ul[i].v2 = v2;
   }
 }
 
@@ -51,6 +58,13 @@ __device__ float dst2_inv(float x, float y) {
 
 __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, float *image) {
   int ri = blockDim.x * blockIdx.x + threadIdx.x;
+
+  float lrintf(ri / );
+  //float r_x2 = c.dx_rays * ()
+  //
+  float r_x1 = 0;
+  float r_x2 = 0;
+
   if (ri < c.nRays) {
     float ray_x1 = rays[ri].x1;
     float ray_x2 = rays[ri].x2;
@@ -63,11 +77,16 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
       sum_x1 += m_x1 * ri;
       sum_x2 += m_x2 * ri;
     }
-    rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
-    rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
+    //rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
+    //rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
     //rays[ri].d = hypotf(rays[ri].x1 - c.image_center_y1, rays[ri].x2 - c.image_center_y2);
-    int x = lrintf((rays[ri].x1 - c.image_y1_left) / c.image_pixel_y1_size);
-    int y = lrintf((rays[ri].x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
+    //int x = lrintf((rays[ri].x1 - c.image_y1_left) / c.image_pixel_y1_size);
+    //int y = lrintf((rays[ri].x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
+
+    r_x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
+    r_x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
+    int x = lrintf((r_x1 - c.image_y1_left) / c.image_pixel_y1_size);
+    int y = lrintf((r_x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
     if (x >= 0 && x < c.image_width && y >= 0 && y < c.image_height) atomicAdd(&image[x * c.image_width + y], 1.0);
   }
 }
@@ -107,12 +126,10 @@ int main(const int argc, const char** argv) {
   cout << "Defining rays field in ... " << flush;
   StartTimer();
   populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
+  cudaMalloc(&image_buf, image_bytes);
   cudaMalloc(&ray_buf, ray_bytes);
   cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
   cout << GetElapsedTime() << " s" << endl;
-  
-  cudaMalloc(&image_buf, image_bytes);
-  cudaMalloc(&ray_buf, ray_bytes);
 
   int nBlocks = (conf.nRays + CUDA_BLOCK_SIZE - 1) / CUDA_BLOCK_SIZE;
 
@@ -128,9 +145,6 @@ int main(const int argc, const char** argv) {
     memset(image, 0, image_bytes);
     cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
 
-    populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);    
-    cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
-  
     cout << endl << ">>> Iteration #" << ++counter << ", t=" << t << endl;
     cout << "    Executing ray tracing ... " << flush;
     StartTimer();
@@ -141,7 +155,7 @@ int main(const int argc, const char** argv) {
     cudaDeviceSynchronize();
     cout << GetElapsedTime() << " s" << endl;
     
-    //sprintf(filename, "rays_y_%.2f.dat", t);
+    //sprintf(filename, "images/rays_y_%.2f.dat", t);
     //cout << "  Writing data to " << filename << " ... " << flush;
     //outf.open(filename);
     //for (int i = 0; i <= conf.nRays; i++) {
@@ -152,7 +166,7 @@ int main(const int argc, const char** argv) {
     //outf.close();
     //cout << GetElapsedTime() << " s" << endl;
 
-    sprintf(filename, "image_%.2f.dat", t);
+    sprintf(filename, "images/image_%.2f.dat", t);
     cout << "    Writing data to " << filename << " ... " << flush;
     outf.open(filename);
     outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;

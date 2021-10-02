@@ -90,7 +90,7 @@ fig, ax = plt.subplots(figsize=(10,10))
 
 ims = []
 
-for i in np.arange(0, 10, 0.1):
+for i in np.arange(0, 1, 0.1):
     filename = "image_%.2f.dat" % i
     image = np.loadtxt(filename).reshape([500,500])
     print(filename, np.sum(image))

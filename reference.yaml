@@ -5,7 +5,7 @@ gamma: 0.1
 R_field: 100
 M_avg: 1.0
 dt: 0.1
-t_max: 10
+t_max: 1
 
 # Rays configuration
 R_rays: 100
@@ -24,15 +24,6 @@ image_center_y2: 0.0
 # General configuration
 randomise_with_time: false
 
-## Ray tracing execution 
-# CPU time: 277.818 s # 6x over GPU
-# GPU time: 45.9759 s
-
-## Map calculations
-# GPU time: 32.1434 s
-
-## Writing data to rays_y_0.00.dat ...
-# Total time: 7.11982 s
-
-## Writing data to image.dat ...
-# Total time: 0.492798 s
+## real    0m13.041s
+## user    0m7.726s
+## sys     0m5.827s

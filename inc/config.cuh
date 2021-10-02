@@ -13,7 +13,7 @@ class Configuration {
         int image_height, image_width;
         float image_y2_height, image_y1_width, image_center_y1, image_center_y2;
         
-        int nMicrolenses, nRays; // Calculated        
+        int nMicrolenses, nRays, nRays_square; // Calculated        
         float image_pixel_y1_size, image_pixel_y2_size, image_y1_left, image_y2_bottom, image_y1_right, image_y2_top, image_diagonal_size; // Calculated
         
         Configuration(const char *);

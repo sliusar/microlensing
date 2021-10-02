@@ -4,5 +4,7 @@ obj/*
 orig/*
 .ipynb_checkpoints/
 rays_*dat
-image*dat
+images/*dat
+images/*mp4
+images/*gif
 .vscode
