@@ -1,6 +1,7 @@
 # General configuration
-randomise_with_time: false
+randomise_seed_number: 0 # if -1 than time is used, > 0 than this number is used
 configuration_id: "reference"
+save_images: true
 
 # GLS configuration
 sigma: 0.5

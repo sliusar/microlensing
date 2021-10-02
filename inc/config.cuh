@@ -8,7 +8,8 @@ class Configuration {
     int debug;
     char* filename;
     public:
-        bool randomise_with_time;
+        bool save_images;
+        int randomise_seed_number;
         float sigma, sigma_c, gamma, R_field, M_avg, R_rays, dx_rays;
         float dt, t_max;
         int image_height, image_width;

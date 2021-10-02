@@ -130,7 +130,23 @@ plt.show()
 
 
 
+# +
+filename1 = "output/test/image_0.00.dat"
+filename2 = "output/test/image_90.00.dat"
 
+img1, extent1 = get_image_data(filename1, gamma=1)
+img2, extent2 = get_image_data(filename2, gamma=1)
+
+fig, (ax1, ax2) = plt.subplots(figsize=(10,4), ncols=2)
+pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
+pos2 = ax2.imshow(img2, interpolation='bessel', extent=extent2, origin='lower')
+ax1.set_title(filename1)
+ax2.set_title(filename2)
+fig.colorbar(pos1, ax=ax1)
+fig.colorbar(pos2, ax=ax2)
+fig.tight_layout()
+plt.show()
+# -
 
 
 

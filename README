@@ -1,1 +1,6 @@
-This project was created to compute microlensing using CUDA.
+CUDA enabled microlensing calculator
+
+```
+make
+./bin/gravlens reference.yaml
+```

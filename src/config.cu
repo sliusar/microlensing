@@ -26,7 +26,9 @@ Configuration::Configuration(const char* filename) {
     image_center_y1 = config["image_center_y1"].as<float>();
     image_center_y2 = config["image_center_y2"].as<float>();
 
-    randomise_with_time = config["randomise_with_time"].as<bool>();
+    save_images = config["save_images"].as<bool>();
+
+    randomise_seed_number = config["randomise_seed_number"].as<int>();
 
     configuration_id = config["configuration_id"].as<string>();
 

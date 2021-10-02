@@ -56,12 +56,19 @@ __device__ float dst2_inv(float x, float y) {
   return rhypotf(x, y) * rhypotf(x, y);
 }
 
+__global__ void createRays(Ray *rays, const Configuration c) {
+  int ri = blockDim.x * blockIdx.x + threadIdx.x;
+  if (ri < c.nRays_square) {
+    int j = ri / c.nRays_line;
+    int i = ri - j * c.nRays_line;
+
+    rays[ri].x1 = i * c.dx_rays - c.R_rays;
+    rays[ri].x2 = j * c.dx_rays - c.R_rays;
+  }
+}
+
 __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, int *image) {
   int ri = blockDim.x * blockIdx.x + threadIdx.x;
-
-  float r_x1 = 0;
-  float r_x2 = 0;
-
   if (ri < c.nRays) {
     float ray_x1 = rays[ri].x1;
     float ray_x2 = rays[ri].x2;
@@ -80,8 +87,8 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
     //int x = lrintf((rays[ri].x1 - c.image_y1_left) / c.image_pixel_y1_size);
     //int y = lrintf((rays[ri].x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
 
-    r_x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
-    r_x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
+    float r_x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
+    float r_x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
     int x = lrintf((r_x1 - c.image_y1_left) / c.image_pixel_y1_size);
     int y = lrintf((r_x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
     if (x >= 0 && x < c.image_width && y >= 0 && y < c.image_height) atomicAdd(&image[x * c.image_width + y], 1.0);
@@ -98,7 +105,8 @@ int main(const int argc, const char** argv) {
 
   Configuration conf(argv[1]);
   conf.display();
-  if (conf.randomise_with_time) srand(time(NULL));
+  if (conf.randomise_seed_number < 0) { long _seed = time(NULL); srand(_seed); cout << "Using " << _seed << " to seed a random generator" << endl; }
+  if (conf.randomise_seed_number > 0) { long _seed = conf.randomise_seed_number; srand(_seed); cout << "Using " << _seed << " to seed a random generator" << endl; }
   
   int ul_bytes = conf.nMicrolenses * sizeof(Microlens);
   int ray_bytes = conf.nRays * sizeof(Ray);
@@ -173,19 +181,23 @@ int main(const int argc, const char** argv) {
     //cout << GetElapsedTime() << " s" << endl;
 
     sprintf(filename, "%s/image_%.2f.dat", output_folder, t);
-    cout << "    Writing data to " << filename << " ... " << flush;
-    outf.open(filename);
-    outf << "# image (" << conf.image_width << ", " << conf.image_height << ")" << endl;
-    outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;
-    outf << "# y in (" << conf.image_y2_bottom << ", " << conf.image_y2_top << ")" << endl;
+    if (conf.save_images) {
+      cout << "    Writing data to " << filename << " ... " << flush;
+      outf.open(filename);
+      outf << "# image (" << conf.image_width << ", " << conf.image_height << ")" << endl;
+      outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;
+      outf << "# y in (" << conf.image_y2_bottom << ", " << conf.image_y2_top << ")" << endl;
 
-    for (int j = 0; j < conf.image_height; j++) {
-      for (int i = 0; i < conf.image_width; i++) {
-        outf << image[i * conf.image_width + j] << endl;
+      for (int j = 0; j < conf.image_height; j++) {
+        for (int i = 0; i < conf.image_width; i++) {
+          outf << image[i * conf.image_width + j] << endl;
+        }
       }
+      outf.close();
+      cout << GetElapsedTime() << " s" << endl;
+    } else {
+      cout << "    Skipping writing data to " << filename << " ... " << endl;
     }
-    outf.close();
-    cout << GetElapsedTime() << " s" << endl;
   }
 
   free(microlenses);
