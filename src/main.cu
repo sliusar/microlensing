@@ -114,7 +114,7 @@ int main(const int argc, const char** argv) {
 
   struct stat info;
 
-  sprintf(output_folder, "./output/%s/", conf.configuration_id.c_str());
+  sprintf(output_folder, "./output/%s", conf.configuration_id.c_str());
   if( stat(output_folder , &info ) != 0 ) {
     if (mkdir(output_folder, 0755) != 0 && errno != EEXIST) {
       cerr << "Failed to create output folder " << output_folder << endl;
@@ -161,7 +161,7 @@ int main(const int argc, const char** argv) {
     cudaDeviceSynchronize();
     cout << GetElapsedTime() << " s" << endl;
     
-    //sprintf(filename, "images/rays_y_%.2f.dat", t);
+    //sprintf(filename, "%s/rays_y_%.2f.dat", output_folder, t);
     //cout << "  Writing data to " << filename << " ... " << flush;
     //outf.open(filename);
     //for (int i = 0; i <= conf.nRays; i++) {
@@ -172,7 +172,7 @@ int main(const int argc, const char** argv) {
     //outf.close();
     //cout << GetElapsedTime() << " s" << endl;
 
-    sprintf(filename, "images/image_%.2f.dat", t);
+    sprintf(filename, "%s/image_%.2f.dat", output_folder, t);
     cout << "    Writing data to " << filename << " ... " << flush;
     outf.open(filename);
     outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;
