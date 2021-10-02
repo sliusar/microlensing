@@ -64,16 +64,21 @@ density_scatter(x, y, bins=[500, 500])
 
 
 def get_image_data(filename, gamma=0.6):
-    image = np.loadtxt(filename).reshape([500,500])
+    
     extent = None
+    image_size = None
     with open(filename, 'r') as f:
+        header0 = f.readline().strip()
         header1 = f.readline().strip()
         header2 = f.readline().strip()
 
+        _s = re.split('\(|\,|\)', header0)
         _x = re.split('\(|\,|\)', header1)
         _y = re.split('\(|\,|\)', header2)
+        image_size = [int(_s[1]),int(_s[2])]
         extent = [float(_x[1]),float(_x[2]),float(_y[1]),float(_y[2])]
-
+    image = np.loadtxt(filename).reshape(image_size)
+    
     img = np.zeros_like(image)
     img[image > 0] = image[image > 0]**gamma
     if img[img == np.max(img)].shape[0] < 5:
@@ -83,8 +88,8 @@ def get_image_data(filename, gamma=0.6):
 
 
 # +
-filename1 = "images/image_0.00.dat"
-filename2 = "images/image_0.90.dat"
+filename1 = "output/reference/image_0.00.dat"
+filename2 = "output/reference/image_0.90.dat"
 
 img1, extent1 = get_image_data(filename1, gamma=1)
 img2, extent2 = get_image_data(filename2, gamma=1)
@@ -110,18 +115,18 @@ fig, ax = plt.subplots(figsize=(10,10))
 ims = []
 
 for i in np.arange(0, 100, 0.1):
-    filename = "images/image_%.2f.dat" % i
+    filename = "output/reference/image_%.2f.dat" % i
     img, extent = get_image_data(filename, gamma=1)
     title = plt.text(0.5,1.01, "t=%.2f" % i, ha="center",va="bottom", transform=ax.transAxes, fontsize="large")
     text = ax.text('','','')
     im = ax.imshow(img, extent=extent, origin='lower', interpolation='bicubic')
     ims.append([text, im, title])
 
-ani = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat=False)
-ani.save("images/moving_stars.mp4")
+ani = animation.ArtistAnimation(fig, ims, interval=100, blit=False, repeat=False)
+ani.save("images/reference_moving_stars.mp4")
 plt.show()
 # -
-ani.save("images/moving_stars.mp4")
+
 
 
 

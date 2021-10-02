@@ -16,8 +16,8 @@ R_rays: 100
 dx_rays: 0.05
 
 # Image definitions
-image_width: 500
-image_height: 500
+image_width: 1000
+image_height: 1000
 
 image_y1_width: 30.0
 image_y2_height: 30.0

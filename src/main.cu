@@ -56,7 +56,7 @@ __device__ float dst2_inv(float x, float y) {
   return rhypotf(x, y) * rhypotf(x, y);
 }
 
-__global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, float *image) {
+__global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, int *image) {
   int ri = blockDim.x * blockIdx.x + threadIdx.x;
 
   float r_x1 = 0;
@@ -102,14 +102,14 @@ int main(const int argc, const char** argv) {
   
   int ul_bytes = conf.nMicrolenses * sizeof(Microlens);
   int ray_bytes = conf.nRays * sizeof(Ray);
-  int image_bytes = conf.image_height * conf.image_width * sizeof(float);
+  int image_bytes = conf.image_height * conf.image_width * sizeof(int);
 
   Microlens *microlenses = (Microlens*)malloc(ul_bytes);
   Ray *rays = (Ray*)malloc(ray_bytes);
-  float *image = (float*)malloc(image_bytes);
+  int *image = (int*)malloc(image_bytes);
 
   Microlens *ul_buf;
-  float *image_buf;
+  int *image_buf;
   Ray *ray_buf;
 
   struct stat info;
@@ -175,6 +175,7 @@ int main(const int argc, const char** argv) {
     sprintf(filename, "%s/image_%.2f.dat", output_folder, t);
     cout << "    Writing data to " << filename << " ... " << flush;
     outf.open(filename);
+    outf << "# image (" << conf.image_width << ", " << conf.image_height << ")" << endl;
     outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;
     outf << "# y in (" << conf.image_y2_bottom << ", " << conf.image_y2_top << ")" << endl;
 
