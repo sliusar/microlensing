@@ -2,6 +2,7 @@
 randomise_seed_number: 0 # if -1 than time is used, > 0 than this number is used
 configuration_id: "reference"
 save_images: true
+output_rays: false
 
 # GLS configuration
 sigma: 0.5
@@ -20,17 +21,33 @@ dx_rays: 0.03
 image_width: 1000
 image_height: 1000
 
-image_y1_width: 50.0
-image_y2_height: 50.0
+image_y1_left: -25
+image_y2_bottom: -25
+image_y1_right: 25
+image_y2_top: 25
 
-image_center_y1: 0.0
-image_center_y2: 0.0
+# LC configuration
+lc_enabled: true
+lc_start_y1: -10
+lc_start_y2: -10
+lc_end_y1: 10
+lc_end_y2: 10
+lc_step: 0.1
 
 ##########################
 # GPU:  MSI P104-100 8GB #
-# real       : 35.806s   #
-# user       : 19.716s   #
-# sys        : 16.024s   #
-# raytracing : 23.0144s  #
-# output:    : 11.7921s  #
 ##########################
+
+## output_rays: false
+# Raytracing time: 16.3184s (mean: 1.63184s)
+# Output time: 12.3643s (mean: 1.23643s)
+# real    0m29.904s
+# user    0m14.990s
+# sys     0m14.754s
+
+## output_rays: true
+# Raytracing time: 23.0291s (mean: 2.30291s)
+# Output time: 12.3677s (mean: 1.23677s)
+# real    0m36.423s
+# user    0m19.865s
+# sys     0m16.461s

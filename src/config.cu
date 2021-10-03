@@ -1,5 +1,4 @@
 #include <config.cuh>
-using namespace std;
 
 Configuration::Configuration(const char* filename) {
 
@@ -20,17 +19,28 @@ Configuration::Configuration(const char* filename) {
     image_width = config["image_width"].as<int>();
     image_height = config["image_height"].as<int>();
     
-    image_y1_width = config["image_y1_width"].as<float>();
-    image_y2_height = config["image_y2_height"].as<float>();
+    image_y1_left = config["image_y1_left"].as<float>();
+    image_y1_right = config["image_y1_right"].as<float>();
     
-    image_center_y1 = config["image_center_y1"].as<float>();
-    image_center_y2 = config["image_center_y2"].as<float>();
+    image_y2_bottom = config["image_y2_bottom"].as<float>();
+    image_y2_top = config["image_y2_top"].as<float>();
 
     save_images = config["save_images"].as<bool>();
 
     randomise_seed_number = config["randomise_seed_number"].as<int>();
 
     configuration_id = config["configuration_id"].as<string>();
+
+    // Light curve
+    lc_start_y1 = config["lc_start_y1"].as<float>();
+    lc_start_y2 = config["lc_start_y2"].as<float>();
+    lc_end_y1 = config["lc_end_y1"].as<float>();
+    lc_end_y2 = config["lc_end_y2"].as<float>();
+    lc_step = config["lc_step"].as<float>();
+
+    lc_enabled = config["lc_enabled"].as<bool>();
+    
+    output_rays = config["output_rays"].as<bool>();
 
     // Recalculated values
     nMicrolenses = sigma * M_PI * R_field * R_field / M_PI * M_avg;
@@ -39,15 +49,11 @@ Configuration::Configuration(const char* filename) {
     nRays_line = (int)ceil(2 * R_rays / dx_rays);
     nRays_square = nRays_line * nRays_line;
 
-    image_pixel_y1_size = image_y1_width / image_width;
-    image_pixel_y2_size = image_y2_height / image_height;
-  
-    image_y1_left = image_center_y1 - image_y1_width/2;
-    image_y1_right = image_center_y1 + image_y1_width/2;
-    image_y2_bottom = image_center_y2 - image_y2_height/2;
-    image_y2_top = image_center_y2 + image_y2_height/2;
+    nLCsteps = (int)ceil(sqrt(pow(lc_end_y1 - lc_start_y1, 2) + pow(lc_end_y2 - lc_start_y2, 2))/lc_step);
+    nTimeSteps = (int)round((t_max + dt) / dt);
 
-    image_diagonal_size = sqrt(pow(image_y1_width,2) + pow(image_y2_height,2));
+    image_pixel_y1_size = (image_y1_right - image_y1_left) / image_width;
+    image_pixel_y2_size = (image_y2_top - image_y2_bottom) / image_height;
 }
 
 void Configuration::display() {
@@ -68,16 +74,24 @@ void Configuration::display() {
     cout << "  dx_rays: " << dx_rays << endl;
     cout << "  nRays: " << nRays << endl;
     cout << endl;
-
-    if (DEBUG) {
-        cout << "--- Image debug data ---" << endl;
-        cout << "image_pixel_y1_size: " << image_pixel_y1_size << endl; 
-        cout << "image_pixel_y2_size: " << image_pixel_y2_size << endl; 
-        cout << "image_y1_left: " << image_y1_left << endl; 
-        cout << "image_y1_right: " << image_y1_right << endl; 
-        cout << "image_y2_bottom: " << image_y2_bottom << endl; 
-        cout << "image_y2_top: " << image_y2_top << endl; 
-        cout << "image_diagonal_size: " << image_diagonal_size << endl; 
+    
+    if (lc_enabled) {
+        cout << "--- LC trajectory ---" << endl;
+        cout << "  Start y1: " << lc_start_y1 << endl;
+        cout << "  Start y2: " << lc_start_y2 << endl;
+        cout << "  End y1: " << lc_end_y1 << endl;
+        cout << "  End y2: " << lc_end_y2 << endl;
+        cout << "  Step: " << lc_step << endl;
+        cout << "  LC steps: " << nLCsteps << endl;    
         cout << endl;
     }
+    
+    cout << "--- Image data ---" << endl;
+    cout << "image_pixel_y1_size: " << image_pixel_y1_size << endl; 
+    cout << "image_pixel_y2_size: " << image_pixel_y2_size << endl; 
+    cout << "image_y1_left: " << image_y1_left << endl; 
+    cout << "image_y1_right: " << image_y1_right << endl; 
+    cout << "image_y2_bottom: " << image_y2_bottom << endl; 
+    cout << "image_y2_top: " << image_y2_top << endl; 
+    cout << endl;
 }

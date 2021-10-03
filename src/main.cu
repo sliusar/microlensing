@@ -1,5 +1,6 @@
 #include <common.cuh>
 #include <config.cuh>
+#include <kernels.cuh>
 #include "timer.h"
 
 using namespace std;
@@ -10,94 +11,7 @@ using namespace std;
 #define CUDA_BLOCK_SIZE 1024
 #define CUDA_BLOCK_SIZE_2d 32
 
-struct Microlens { float x1, x2, v1, v2, m; } ;
-struct Ray { float x1, x2; };
-
-float distance(float x, float y, float center_x, float center_y) {
-  return sqrt(pow(x - center_x, 2) + pow(y - center_y, 2));
-}
-
-float distance(float x, float y) {
-  return distance(x, y, 0, 0);
-}
-
-void randomiseMicrolenses(Microlens *ul, int n, float R) {
-  
-  for (int i = 0; i < n; i++) {
-    float x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
-    float x2 = 2 * R * (rand() / (float)RAND_MAX) - R;
-
-    while (distance(x1, x2) > R) {
-      x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
-      x2 = 2 * R * (rand() / (float)RAND_MAX) - R;
-    }
-    ul[i] = {.x1 = x1, .x2 = x2, .v1 = 0.0, .v2 = 0.0, .m = 1.0 };
-  }
-
-  float speed_range_radius = 1;
-  for (int i = 0; i < n; i++) {
-    float v1 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
-    float v2 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
-    ul[i].v1 = v1;
-    ul[i].v2 = v2;
-  }
-}
-
-void populateRays(Ray *rays, int nRays, float R_rays, float dx_rays) {
-  int counter = 0;
-  for (float x1 = - R_rays; x1 <= R_rays; x1 += dx_rays) {
-    for (float x2 = - R_rays; x2 <= R_rays; x2 += dx_rays) {
-      if (distance(x1, x2) <= R_rays && counter < nRays) rays[counter++] = {.x1 = x1, .x2 = x2 };
-    }
-  }
-}
-
-__device__ float dst2_inv(float x, float y) {
-  return rhypotf(x, y) * rhypotf(x, y);
-}
-
-__global__ void createRays(Ray *rays, const Configuration c) {
-  int ri = blockDim.x * blockIdx.x + threadIdx.x;
-  if (ri < c.nRays_square) {
-    int j = ri / c.nRays_line;
-    int i = ri - j * c.nRays_line;
-
-    rays[ri].x1 = i * c.dx_rays - c.R_rays;
-    rays[ri].x2 = j * c.dx_rays - c.R_rays;
-  }
-}
-
-__global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, int *image) {
-  int ri = blockDim.x * blockIdx.x + threadIdx.x;
-  if (ri < c.nRays) {
-    float ray_x1 = rays[ri].x1;
-    float ray_x2 = rays[ri].x2;
-    float sum_x1 = 0.0;
-    float sum_x2 = 0.0;
-    for (int i = 0; i < c.nMicrolenses; i++) {
-      float m_x1 = ray_x1 - uls[i].x1 - (uls[i].v1 * t);
-      float m_x2 = ray_x2 - uls[i].x2 - (uls[i].v2 * t);
-      float ri = uls[i].m * dst2_inv(m_x1, m_x2);
-      sum_x1 += m_x1 * ri;
-      sum_x2 += m_x2 * ri;
-    }
-    //rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
-    //rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
-    //rays[ri].d = hypotf(rays[ri].x1 - c.image_center_y1, rays[ri].x2 - c.image_center_y2);
-    //int x = lrintf((rays[ri].x1 - c.image_y1_left) / c.image_pixel_y1_size);
-    //int y = lrintf((rays[ri].x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
-
-    float r_x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
-    float r_x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
-    int x = lrintf((r_x1 - c.image_y1_left) / c.image_pixel_y1_size);
-    int y = lrintf((r_x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
-    if (x >= 0 && x < c.image_width && y >= 0 && y < c.image_height) atomicAdd(&image[x * c.image_width + y], 1.0);
-  }
-}
-
-__global__ void calculate_lightcurves(const Configuration c, const float t, int *image) {
-
-}
+#define LC_COLUMNS 4
 
 int main(const int argc, const char** argv) {
   if (argc != 2) {
@@ -111,7 +25,7 @@ int main(const int argc, const char** argv) {
   conf.display();
   if (conf.randomise_seed_number != 0) {
     long _seed = time(NULL);
-    if (conf.randomise_seed_number < 0) _seed = conf.randomise_seed_number;
+    if (conf.randomise_seed_number > 0) _seed = conf.randomise_seed_number;
     cout << "Using " << _seed << " to seed the random generator" << endl;
     srand(_seed);
   }
@@ -119,14 +33,17 @@ int main(const int argc, const char** argv) {
   int ul_bytes = conf.nMicrolenses * sizeof(Microlens);
   int ray_bytes = conf.nRays * sizeof(Ray);
   int image_bytes = conf.image_height * conf.image_width * sizeof(int);
+  int lc_bytes = LC_COLUMNS * conf.nLCsteps * sizeof(float);
 
   Microlens *microlenses = (Microlens*)malloc(ul_bytes);
   Ray *rays = (Ray*)malloc(ray_bytes);
   int *image = (int*)malloc(image_bytes);
+  float *lc = (float*)malloc(lc_bytes);
 
   Microlens *ul_buf;
-  int *image_buf;
   Ray *ray_buf;
+  int *image_buf;
+  float *lc_buf;
 
   struct stat info;
 
@@ -137,6 +54,8 @@ int main(const int argc, const char** argv) {
       return -1;
     }
   }
+
+  cudaMalloc(&image_buf, image_bytes);
   
   cout << "Creating microlensing field ... " << flush;
   StartTimer();
@@ -144,16 +63,28 @@ int main(const int argc, const char** argv) {
   cudaMalloc(&ul_buf, ul_bytes);
   cudaMemcpy(ul_buf, microlenses, ul_bytes, cudaMemcpyHostToDevice);
   cout << GetElapsedTime() << "s" << endl;
-  
+
   cout << "Creating rays field ... " << flush;
   StartTimer();
-  populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
-  cudaMalloc(&image_buf, image_bytes);
   cudaMalloc(&ray_buf, ray_bytes);
-  cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
+  if (conf.output_rays) {
+    populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
+    cudaMemcpy(ray_buf, rays, ray_bytes, cudaMemcpyHostToDevice);
+  }
   cout << GetElapsedTime() << "s" << endl;
 
-  int nBlocks = (conf.nRays + CUDA_BLOCK_SIZE - 1) / CUDA_BLOCK_SIZE;
+  if (conf.lc_enabled) {
+    cout << "Creating LC trajectory ... " << flush;
+    StartTimer();
+    createTrajectory(lc, conf);
+    cudaMalloc(&lc_buf, lc_bytes);
+    cudaMemcpy(lc_buf, lc, lc_bytes, cudaMemcpyHostToDevice);
+    cout << GetElapsedTime() << "s" << endl;
+  }
+
+  int nBlocksRays = (conf.nRays + CUDA_BLOCK_SIZE - 1) / CUDA_BLOCK_SIZE;
+  int nBlocksImageW = (conf.image_width + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d;
+  int nBlocksImageH = (conf.image_height + CUDA_BLOCK_SIZE_2d - 1) / CUDA_BLOCK_SIZE_2d;
 
   //From https://stackoverflow.com/questions/11888772/when-to-call-cudadevicesynchronize
   //  kernel1<<<X,Y>>>(...); // kernel start execution, CPU continues to next statement
@@ -165,23 +96,45 @@ int main(const int argc, const char** argv) {
   float _t = 0;
   float t_raytracing = 0;
   float t_output = 0;
+  float t_lc = 0;
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
     
     memset(image, 0, image_bytes);
     cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
 
     cout << endl << ">>> Iteration #" << ++counter << ", t=" << t << endl;
+    
     cout << "    Executing ray tracing ... " << flush;
     StartTimer();
-    deflectRays<<<nBlocks, CUDA_BLOCK_SIZE>>>(ul_buf, ray_buf, conf, t, image_buf); // compute ray deflections
-    //deflectRaysCPU(microlenses, rays, conf, t); // CPU version
-    cudaMemcpy(rays, ray_buf, ray_bytes, cudaMemcpyDeviceToHost);
-    cudaMemcpy(image, image_buf, image_bytes, cudaMemcpyDeviceToHost);
-    cudaDeviceSynchronize();
+    deflectRays<<<nBlocksRays, CUDA_BLOCK_SIZE>>>(ul_buf, ray_buf, conf, t, image_buf, lc_buf); // compute ray deflections
+    if (conf.output_rays) cudaMemcpy(rays, ray_buf, ray_bytes, cudaMemcpyDeviceToHost);
+    if (conf.lc_enabled) cudaMemcpy(lc, lc_buf, lc_bytes, cudaMemcpyDeviceToHost);
+    if (conf.save_images) cudaMemcpy(image, image_buf, image_bytes, cudaMemcpyDeviceToHost);
+    cudaError_t err = cudaDeviceSynchronize();
+    if(err != cudaSuccess) {
+      cerr << "Error running the deflectRays() kernel" << endl;
+      return -1;
+    }
     _t = GetElapsedTime();
     t_raytracing += _t;
     cout << _t << "s" << endl;
+
     
+    if (conf.lc_enabled) {
+      cout << "    Executing light curve calculation ... " << flush;
+      StartTimer();
+      calculateLCs<<<dim3(nBlocksImageW, nBlocksImageH), dim3(CUDA_BLOCK_SIZE_2d, CUDA_BLOCK_SIZE_2d)>>>(conf, image_buf, lc_buf); // compute lc
+      cudaMemcpy(lc, lc_buf, lc_bytes, cudaMemcpyDeviceToHost);
+      cudaError_t err = cudaDeviceSynchronize();
+      if(err != cudaSuccess) {
+        cerr << "Error running the calculateLCs() kernel" << endl;
+        return -1;
+      }
+      _t = GetElapsedTime();
+      t_lc += _t;
+      cout << _t << "s" << endl;
+    }
+
     //sprintf(filename, "%s/rays_y_%.2f.dat", output_folder, t);
     //cout << "  Writing data to " << filename << " ... " << flush;
     //outf.open(filename);
@@ -195,6 +148,7 @@ int main(const int argc, const char** argv) {
 
     sprintf(filename, "%s/image_%.2f.dat", output_folder, t);
     if (conf.save_images) {
+      StartTimer();
       cout << "    Writing data to " << filename << " ... " << flush;
       outf.open(filename);
       outf << "# image (" << conf.image_width << ", " << conf.image_height << ")" << endl;
@@ -213,11 +167,28 @@ int main(const int argc, const char** argv) {
     } else {
       cout << "    Skipping writing data to " << filename << " ... " << endl;
     }
+
+    sprintf(filename, "%s/lc_%.2f.dat", output_folder, t);
+    if (conf.lc_enabled) {
+      StartTimer();
+      cout << "    Writing light curves data to " << filename << " ... " << flush;
+      outf.open(filename);
+      int c = conf.nLCsteps;
+      for (int i = 0; i < c; i++) {
+        outf << lc[i + 0 * c] << " " << lc[i + 1 * c] << " " << lc[i + 2 * c] << " " << lc[i + 3 * c] << endl;
+      }
+      outf.close();
+      _t = GetElapsedTime();
+      t_output += _t;
+      cout << _t << "s" << endl;        
+    }
   }
 
   cout << endl << ">>> Run summary:" << endl;
-  cout << "    Raytracking time: " << t_raytracing << "s (mean: " << t_raytracing/counter << "s)" << endl;
+  cout << "    Raytracing time: " << t_raytracing << "s (mean: " << t_raytracing/counter << "s)" << endl;
   cout << "    Output time: " << t_output << "s (mean: " << t_output / counter << "s)" << endl;
+
+  //if (conf.lc_enabled) printLC(lc, conf.nLCsteps);
 
   free(microlenses);
   free(rays);
