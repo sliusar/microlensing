@@ -79,7 +79,7 @@ density_scatter(x, y, bins=[500, 500])
 
 
 
-def get_image_data(filename, gamma=0.6, debug=False, hide_max=False):
+def get_image_data(filename, gamma=0.6, debug=False, hide_max=False, logscale=False):
     
     extent = None
     image_size = None
@@ -103,7 +103,10 @@ def get_image_data(filename, gamma=0.6, debug=False, hide_max=False):
         print(f"\ttotal_rays: {np.sum(image)}")
     
     img = np.zeros_like(image)
-    img[image > 0] = image[image > 0]**gamma
+    if gamma is not None:
+        img[image > 0] = image[image > 0]**gamma
+    if logscale is not None and logscale:
+        img[image > 0] = np.log10(image[image > 0])
     if img[img == np.max(img)].shape[0] < 5 and hide_max:
         img[img == np.max(img)] = np.mean(img) # removing center-of-mass pixel with extreame amplification
     return img, extent
@@ -175,8 +178,8 @@ plt.show()
 filename1 = "output/reference/image_0.00.dat"
 filename2 = "../testing/microlensing/output/reference/image_0.00.dat"
 
-img1, extent1 = get_image_data(filename1, gamma=1)
-img2, extent2 = get_image_data(filename2, gamma=1)
+img1, extent1 = get_image_data(filename1, logscale=1)
+img2, extent2 = get_image_data(filename2, logscale=1)
 
 fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
 pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
