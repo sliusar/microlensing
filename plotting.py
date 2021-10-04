@@ -18,6 +18,11 @@ import numpy as np
 import re
 import matplotlib
 # %matplotlib notebook
+import pandas as pd
+
+import matplotlib as mpl
+mpl.rcParams['axes.formatter.useoffset'] = False
+
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -45,12 +50,15 @@ import matplotlib.animation as animation
 
 
 
+rays_y = np.loadtxt("./output/test/rays_0.00.dat")
+
+m = np.logical_and(np.abs(rays_y[:,0]) <= 100, np.abs(rays_y[:,1]) <= 100)
+x = rays_y[:,0][m]
+y = rays_y[:,1][m]
+density_scatter(x, y, bins=[200, 200])
 
 
 # +
-
-rays_y = np.loadtxt("rays_y_0.00.dat")
-
 m = np.logical_and(np.abs(rays_y[:,0]) <= 20, np.abs(rays_y[:,1]) <= 20)
 x = rays_y[:,0][m]
 y = rays_y[:,1][m]
@@ -92,6 +100,7 @@ def get_image_data(filename, gamma=0.6, debug=False, hide_max=False):
         print(f"{filename}")
         print(f"\tzeros: {_z} ({100 * _z/_all}%)")
         print(f"\tmean & std: {np.mean(image)} +- {np.std(image)}")
+        print(f"\ttotal_rays: {np.sum(image)}")
     
     img = np.zeros_like(image)
     img[image > 0] = image[image > 0]**gamma
@@ -102,32 +111,15 @@ def get_image_data(filename, gamma=0.6, debug=False, hide_max=False):
 
 
 # +
-filename1 = "output/reference/image_0.00.dat"
-filename2 = "output/reference/image_0.90.dat"
-
-img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
-img2, extent2 = get_image_data(filename2, gamma=1, debug=True)
-
-fig, (ax1, ax2) = plt.subplots(figsize=(10,4), ncols=2)
-pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
-pos2 = ax2.imshow(img2, interpolation='bessel', extent=extent2, origin='lower')
-ax1.set_title(filename1)
-ax2.set_title(filename2)
-fig.colorbar(pos1, ax=ax1)
-fig.colorbar(pos2, ax=ax2)
-fig.tight_layout()
-plt.show()
-
-# +
 filename1 = "output/test/image_0.00.dat"
 filename2 = "output/test/image_0.00.dat"
 
 img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
 img2, extent2 = get_image_data(filename2, gamma=1, debug=True)
 
-fig, (ax1, ax2) = plt.subplots(figsize=(10,4), ncols=2)
-pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
-pos2 = ax2.imshow(img2, interpolation='bessel', extent=extent2, origin='lower')
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
+pos1 = ax1.imshow(img1, interpolation='none', extent=extent1, origin='lower')
+pos2 = ax2.imshow(img2, interpolation='none', extent=extent2, origin='lower')
 ax1.set_title(filename1)
 ax2.set_title(filename2)
 fig.colorbar(pos1, ax=ax1)
@@ -136,7 +128,27 @@ fig.tight_layout()
 plt.show()
 # -
 
-a=1
+
+
+# +
+filename1 = "output/test/image_0.00.dat"
+filename2 = "output/test/image_0.00.dat"
+
+img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
+img2, extent2 = get_image_data(filename2, gamma=1, debug=True)
+
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
+pos1 = ax1.imshow(img1, interpolation='none', extent=extent1, origin='lower')
+pos2 = ax2.imshow(img2, interpolation='none', extent=extent2, origin='lower')
+ax1.set_title(filename1)
+ax2.set_title(filename2)
+fig.colorbar(pos1, ax=ax1)
+fig.colorbar(pos2, ax=ax2)
+fig.tight_layout()
+plt.show()
+# -
+
+
 
 # +
 fig, ax = plt.subplots(figsize=(10,10))
@@ -160,13 +172,13 @@ plt.show()
 
 
 # +
-filename1 = "output/test/image_0.00.dat"
-filename2 = "output/test/image_90.00.dat"
+filename1 = "output/reference/image_0.00.dat"
+filename2 = "../testing/microlensing/output/reference/image_0.00.dat"
 
 img1, extent1 = get_image_data(filename1, gamma=1)
 img2, extent2 = get_image_data(filename2, gamma=1)
 
-fig, (ax1, ax2) = plt.subplots(figsize=(10,4), ncols=2)
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
 pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
 pos2 = ax2.imshow(img2, interpolation='bessel', extent=extent2, origin='lower')
 ax1.set_title(filename1)
@@ -199,20 +211,21 @@ def get_lc_data(filename):
     return df
 
 
+# !pwd
 
 # +
-filename1 = "output/test/image_0.00.dat"
-filename2 = "output/test/lc_0.00.dat"
+filename1 = "output/reference/image_0.00.dat"
+filename2 = "output/reference/lc_0.00.dat"
 
 img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
 lc = get_lc_data(filename2)
 
-fig, (ax1, ax2) = plt.subplots(figsize=(10,4), ncols=2)
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
 pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
 ax1.plot(lc['y1'], lc['y2'], color='red')
-#pos2 = ax2.plot(lc['y1'], (lc['ampl']/lc['norm'])/(2*np.pi*0.01), '-')
-pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
-pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
+pos2 = ax2.plot(lc['y1'], lc['ampl']/lc['norm']*(np.pi*0.3**2), '-')
+#pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
+#pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
 ax1.set_title(filename1)
 ax2.set_title(filename2)
 fig.colorbar(pos1, ax=ax1)
@@ -220,15 +233,34 @@ fig.tight_layout()
 plt.show()
 # -
 
-np.mean(lc['ampl'])/np.mean(lc['norm'])
+np.mean(lc['ampl'])/np.mean(lc['norm'])*(np.pi*0.3**2)
 
 np.mean(lc['norm']), np.std(lc['norm'])
 
 
 np.mean(lc['ampl']), np.std(lc['ampl'])
 
-np.mean(np.loadtxt("output/test/image_0.00.dat"))
+data = np.loadtxt("output/test/image_0.00.dat")
+np.mean(data), np.std(data)
 
+# +
+filename1 = "output/reference/image_0.00.dat"
+filename2 = "output/reference/lc_0.00.dat"
 
+img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
+lc = get_lc_data(filename2)
+
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
+pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
+ax1.plot(lc['y1'], lc['y2'], color='red')
+pos2 = ax2.plot(lc['y1'], lc['ampl']/lc['norm']*(np.pi*0.3**2), '-')
+#pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
+#pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
+ax1.set_title(filename1)
+ax2.set_title(filename2)
+fig.colorbar(pos1, ax=ax1)
+fig.tight_layout()
+plt.show()
+# -
 
 

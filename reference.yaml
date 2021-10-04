@@ -15,16 +15,16 @@ t_max: 1
 
 # Rays configuration
 R_rays: 100
-dx_rays: 0.03
+dx_rays: 0.05
 
 # Output image definitions
 image_width: 1000
 image_height: 1000
 
-image_y1_left: -25
-image_y2_bottom: -25
-image_y1_right: 25
-image_y2_top: 25
+image_y1_left: -15
+image_y2_bottom: -15
+image_y1_right: 15
+image_y2_top: 15
 
 # LC configuration
 lc_enabled: true

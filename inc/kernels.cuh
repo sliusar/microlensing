@@ -8,7 +8,7 @@
 
 float distance(float, float, float, float);
 float distance(float, float);
-void randomiseMicrolenses(Microlens*, int, float);
+void randomiseMicrolenses(Microlens*, Configuration);
 void populateRays(Ray *, int, float, float);
 void createTrajectory(float *, const Configuration);
 void printLC(float *, int);

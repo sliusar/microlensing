@@ -9,8 +9,11 @@ float distance(float x, float y) {
   return distance(x, y, 0, 0);
 }
 
-void randomiseMicrolenses(Microlens *ul, int n, float R) {
-  
+void randomiseMicrolenses(Microlens *ul, Configuration conf) {
+  int n = conf.nMicrolenses;
+  float R = conf.R_field;
+  float M = conf.M_avg;
+
   for (int i = 0; i < n; i++) {
     float x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
     float x2 = 2 * R * (rand() / (float)RAND_MAX) - R;
@@ -29,17 +32,25 @@ void randomiseMicrolenses(Microlens *ul, int n, float R) {
     ul[i].v1 = v1;
     ul[i].v2 = v2;
   }
+
+  for (int i = 0; i < n; i++) {
+    float m = M * (rand() / (float)RAND_MAX);
+    ul[i].m = m;
+    //cout << ul[i].x1 << "\t" << ul[i].x2 << "\t" << ul[i].v1 << "\t" << ul[i].v2 << "\t" << ul[i].m << endl;
+  }
 }
 
 void populateRays(Ray *rays, int nRays, float R_rays, float dx_rays) {
-    for (int i = 0; i < nRays; i++) rays[i] = { .x1 = 0, .x2 = 0 };
-    //int counter = 0;
-    //for (float x1 = - R_rays; x1 <= R_rays; x1 += dx_rays) {
-    //  for (float x2 = - R_rays; x2 <= R_rays; x2 += dx_rays) {
-    //    if (distance(x1, x2) <= R_rays && counter < nRays) rays[counter++] = {.x1 = x1, .x2 = x2 };
-    //  }
-    //}
+  //for (int i = 0; i < nRays; i++) rays[i] = { .x1 = 0, .x2 = 0 };
+  int counter = 0;
+  for (float x1 = - R_rays; x1 <= R_rays; x1 += dx_rays) {
+    for (float x2 = - R_rays; x2 <= R_rays; x2 += dx_rays) {
+      if (distance(x1, x2) <= R_rays && counter < nRays) rays[counter++] = {.x1 = x1, .x2 = x2 };
+    }
+  }
 }
+
+
 
 void createTrajectory(float *lc_trajectory, const Configuration conf) {
     int counter = 0;
@@ -82,11 +93,14 @@ __device__ float H(float a, float x) {
 
 __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, int *image, float* lc) {
   int ri = blockDim.x * blockIdx.x + threadIdx.x;
-  int j = ri / c.nRays_line;
-  int i = ri - j * c.nRays_line;
+  int j = ri / c.nRaysLine;
+  int i = ri - j * c.nRaysLine;
   float ray_x1 = i * c.dx_rays - c.R_rays;
   float ray_x2 = j * c.dx_rays - c.R_rays;
-
+  //if (ri < c.nRays) {
+  //  double ray_x1 = rays[ri].x1;
+  //  double ray_x2 = rays[ri].x2;
+  float test = 0;
   if (dst(ray_x1, ray_x2) <= c.R_rays) {
     float sum_x1 = 0.0;
     float sum_x2 = 0.0;
@@ -99,21 +113,30 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
     }
     ray_x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
     ray_x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
-
-    if (c.output_rays) {
-        rays[ri].x1 = ray_x1;
-        rays[ri].x2 = ray_x2;    
+    //
+    //if (c.output_rays) {
+    //    rays[ri].x1 = ray_x1;
+    //    rays[ri].x2 = ray_x2;    
+    //}
+/*
+    if (ray_x1 >= c.image_y1_left && ray_x1 <= c.image_y1_right) {
+      if (ray_x2 >= c.image_y2_bottom && ray_x2 <= c.image_y2_top) {
+        int w = ((ray_x1 - c.image_y1_left) / c.image_pixel_y1_size);
+        int h = ((ray_x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
+        if (w >= 0 && h >= 0 && w < c.image_width && h < c.image_height) atomicAdd(&image[w * c.image_height + h], 1);
+      }
     }
-
-    int w = lrintf((ray_x1 - c.image_y1_left) / c.image_pixel_y1_size);
-    int h = lrintf((ray_x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
-    if (w >= 0 && w < c.image_width && h >= 0 && h < c.image_height) atomicAdd(&image[w * c.image_height + h], 1);
-
-
-    for (int i = 0; i < c.nLCsteps; i++) {
+*/
+    int w = ((ray_x1 - c.image_y1_left) / c.image_pixel_y1_size);
+    int h = ((ray_x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
+    if (w >= 0 && h >= 0 && w < c.image_width && h < c.image_height) 
+    {
+      atomicAdd(&image[w * c.image_height + h], 1);
+      /*
+      for (int i = 0; i < c.nLCsteps; i++) {
         float lc_y1 = lc[i + 0 * c.nLCsteps];
         float lc_y2 = lc[i + 1 * c.nLCsteps];
-        float d = dst(lc_y1 - ray_x1, lc_y2 - ray_x2);
+        float d = dst(lc_y1, lc_y2, ray_x1, ray_x2);
         float sigma = 0.1;
         float sigma2 = 0.01;
         if (d < 4 * sigma) {
@@ -121,6 +144,8 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
             //atomicAdd(&lc[i + 2 * c.nLCsteps], 1.0); // Normalization
             //atomicAdd(&lc[i + 3 * c.nLCsteps], val); // Amplitude value, non-normalized
         }
+      }
+      */
     }
   }
 }
@@ -129,26 +154,56 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
   int w = blockIdx.x * blockDim.x + threadIdx.x;
   int h = blockIdx.y * blockDim.y + threadIdx.y;
 
-
-  float r_x1 = w * c.image_pixel_y1_size + c.image_y1_left;
-  float r_x2 = h * c.image_pixel_y2_size + c.image_y2_bottom;
-
-  for (int i = 0; i < c.nLCsteps; i++) {
-    float lc_y1 = lc[i + 0 * c.nLCsteps];
-    float lc_y2 = lc[i + 1 * c.nLCsteps];
-    float d = dst(lc_y1 - r_x1, lc_y2 - r_x2);
-    float sigma = 0.1;
-    float sigma2 = 0.01;
-    if (d < 4 * sigma) {
-        float v = expf(- d * d / sigma2);
-        float val = image[w * c.image_height + h] * v;
-        atomicAdd(&lc[i + 2 * c.nLCsteps], v); // Normalization
-        atomicAdd(&lc[i + 3 * c.nLCsteps], val); // Amplitude value, non-normalized
-    }
-    //factorex = exp(-dist2 / sigsq2);
-    //dum = pix[ix + i1 + (iy + i2) * pix_dim1];
-    //value += dum * factorex;
-    //normfac += factorex;
+  if (w * c.image_height + h < c.image_height * c.image_width) {
+    float r_x1 = w * c.image_pixel_y1_size + c.image_y1_left;
+    float r_x2 = h * c.image_pixel_y2_size + c.image_y2_bottom;
+  
+    for (int i = 0; i < c.nLCsteps; i++) {
+      float lc_y1 = lc[i + 0 * c.nLCsteps];
+      float lc_y2 = lc[i + 1 * c.nLCsteps];
+      float d = dst(lc_y1 - r_x1, lc_y2 - r_x2);
+      float sigma = 0.5;
+      float sigma2 = sigma * sigma;
+      if (d < 4 * sigma) {
+          float v = expf(- d * d / sigma2);
+          float val = image[w * c.image_height + h] * v;
+          atomicAdd(&lc[i + 2 * c.nLCsteps], v); // Normalization
+          atomicAdd(&lc[i + 3 * c.nLCsteps], val); // Amplitude value, non-normalized
+      }
+      //factorex = exp(-dist2 / sigsq2);
+      //dum = pix[ix + i1 + (iy + i2) * pix_dim1];
+      //value += dum * factorex;
+      //normfac += factorex;
+    }   
   }
-
 }
+
+
+__global__ void deflectRays123(Microlens *uls, Ray *rays, const Configuration c, const float t, int *image, float *lc) {
+  int ri = blockDim.x * blockIdx.x + threadIdx.x;
+  if (ri < c.nRays) {
+    float ray_x1 = rays[ri].x1;
+    float ray_x2 = rays[ri].x2;
+    float sum_x1 = 0.0;
+    float sum_x2 = 0.0;
+    for (int i = 0; i < c.nMicrolenses; i++) {
+      float m_x1 = ray_x1 - uls[i].x1 - (uls[i].v1 * t);
+      float m_x2 = ray_x2 - uls[i].x2 - (uls[i].v2 * t);
+      float ri = uls[i].m * dst2_inv(m_x1, m_x2);
+      sum_x1 += m_x1 * ri;
+      sum_x2 += m_x2 * ri;
+    }
+    //rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
+    //rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
+    //rays[ri].d = hypotf(rays[ri].x1 - c.image_center_y1, rays[ri].x2 - c.image_center_y2);
+    //int x = lrintf((rays[ri].x1 - c.image_y1_left) / c.image_pixel_y1_size);
+    //int y = lrintf((rays[ri].x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
+
+    float r_x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
+    float r_x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
+    int x = (r_x1 - c.image_y1_left) / c.image_pixel_y1_size;
+    int y = (r_x2 - c.image_y2_bottom) / c.image_pixel_y2_size;
+    if (x >= 0 && x < c.image_width && y >= 0 && y < c.image_height) atomicAdd(&image[x * c.image_width + y], 1.0);
+  }
+}
+

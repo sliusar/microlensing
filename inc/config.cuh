@@ -16,7 +16,7 @@ class Configuration {
 
         string configuration_id;
         
-        int nMicrolenses, nRays, nRays_square, nRays_line, nLCsteps, nTimeSteps; // Calculated        
+        int nMicrolenses, nRays, nRaysSq, nRaysLine, nLCsteps, nTimeSteps; // Calculated        
         float image_pixel_y1_size, image_pixel_y2_size; // Calculated
         
         float lc_start_y1, lc_start_y2, lc_end_y1, lc_end_y2, lc_step;

@@ -39,15 +39,16 @@ Configuration::Configuration(const char* filename) {
     lc_step = config["lc_step"].as<float>();
 
     lc_enabled = config["lc_enabled"].as<bool>();
-    
+
     output_rays = config["output_rays"].as<bool>();
 
     // Recalculated values
-    nMicrolenses = sigma * M_PI * R_field * R_field / M_PI * M_avg;
+    nMicrolenses = sigma * R_field * R_field / M_avg;
+    if (nMicrolenses == 0) nMicrolenses = 1;
 
     nRays = (int)ceil((M_PI * pow(R_rays, 2)) / pow(dx_rays, 2));
-    nRays_line = (int)ceil(2 * R_rays / dx_rays);
-    nRays_square = nRays_line * nRays_line;
+    nRaysLine = (int)ceil(2 * R_rays / dx_rays);
+    nRaysSq = nRaysLine * nRaysLine;
 
     nLCsteps = (int)ceil(sqrt(pow(lc_end_y1 - lc_start_y1, 2) + pow(lc_end_y2 - lc_start_y2, 2))/lc_step);
     nTimeSteps = (int)round((t_max + dt) / dt);

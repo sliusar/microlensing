@@ -5,37 +5,36 @@ save_images: true
 output_rays: false
 
 # GLS configuration
-sigma: 0.025
+sigma: 0.5
 sigma_c: 0
 gamma: 0.1
-R_field: 1
-M_avg: 5.0
+R_field: 100
+M_avg: 1
 dt: 0.1
-t_max: 0.05
+t_max: 1
 
 # Rays configuration
 R_rays: 100
-dx_rays: 0.03
+dx_rays: 0.025
 
 # Output image definitions
 image_width: 1000
 image_height: 1000
 
-#image_y1_left: 0
-#image_y2_bottom: -1.5
-#image_y1_right: 4
-#image_y2_top: 0
+#image_y1_left: -10
+#image_y2_bottom: -10
+#image_y1_right: 10
+#image_y2_top: 10
 
-image_y1_left: -120
-image_y2_bottom: -120
-image_y1_right: 120
-image_y2_top: 120
-
+image_y1_left: -25
+image_y2_bottom: -25
+image_y1_right: 25
+image_y2_top: 25
 
 # LC configuration
 lc_enabled: true
-lc_start_y1: 1
-lc_start_y2: -1
-lc_end_y1: 3
-lc_end_y2: -0.5
-lc_step: 0.01
+lc_start_y1: -9
+lc_start_y2: -2
+lc_end_y1: 9
+lc_end_y2: -1
+lc_step: 0.1
