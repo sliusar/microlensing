@@ -298,7 +298,7 @@ def animate(i):
 ani = animation.FuncAnimation(fig, animate, init_func=init, 
                               blit=True, frames=10, repeat=True,
                               interval=200, repeat_delay=1000)
-ani.save('result.mp4')
+ani.save('images/reference_lc_moving_stars.mp4')
 # -
 
 
