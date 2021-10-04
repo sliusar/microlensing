@@ -151,22 +151,25 @@ fig.tight_layout()
 plt.show()
 # -
 
-
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 # +
 fig, ax = plt.subplots(figsize=(10,10))
 
 ims = []
 
-for i in np.arange(0, 100, 0.1):
-    filename = "output/reference/image_%.2f.dat" % i
-    img, extent = get_image_data(filename, gamma=1)
+for i in np.arange(0, 1, 0.1):
+    filename1 = "output/reference/image_%.2f.dat" % i
+    filename2 = "output/reference/lc_%.2f.dat" % i
+    img, extent = get_image_data(filename1, logscale=1)
+    lc = get_lc_data(filename2)    
     title = plt.text(0.5,1.01, "t=%.2f" % i, ha="center",va="bottom", transform=ax.transAxes, fontsize="large")
     text = ax.text('','','')
     im = ax.imshow(img, extent=extent, origin='lower', interpolation='bicubic')
+    ax.plot(lc['y1'], lc['y2'], color='red')
     ims.append([text, im, title])
 
-ani = animation.ArtistAnimation(fig, ims, interval=100, blit=False, repeat=False)
+ani = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat=True, repeat_delay=1000)
 ani.save("images/reference_moving_stars.mp4")
 plt.show()
 # -
@@ -210,8 +213,7 @@ import pandas as pd
 
 def get_lc_data(filename):
     data = np.loadtxt(filename)
-    df = pd.DataFrame(data=data, columns=["y1", "y2", "norm", "ampl"])
-    return df
+    return pd.DataFrame(data=data.copy(), columns=["y1", "y2", "norm", "ampl"])
 
 
 # !pwd
@@ -220,13 +222,13 @@ def get_lc_data(filename):
 filename1 = "output/reference/image_0.00.dat"
 filename2 = "output/reference/lc_0.00.dat"
 
-img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
+img1, extent1 = get_image_data(filename1, gamma=0.6, debug=True)
 lc = get_lc_data(filename2)
 
 fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
 pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
 ax1.plot(lc['y1'], lc['y2'], color='red')
-pos2 = ax2.plot(lc['y1'], lc['ampl']/lc['norm']*(np.pi*0.3**2), '-')
+pos2 = ax2.plot(lc['y1'], lc['ampl']/lc['norm'], '-')
 #pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
 #pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
 ax1.set_title(filename1)
@@ -234,29 +236,18 @@ ax2.set_title(filename2)
 fig.colorbar(pos1, ax=ax1)
 fig.tight_layout()
 plt.show()
-# -
-
-np.mean(lc['ampl'])/np.mean(lc['norm'])*(np.pi*0.3**2)
-
-np.mean(lc['norm']), np.std(lc['norm'])
-
-
-np.mean(lc['ampl']), np.std(lc['ampl'])
-
-data = np.loadtxt("output/test/image_0.00.dat")
-np.mean(data), np.std(data)
 
 # +
 filename1 = "output/reference/image_0.00.dat"
 filename2 = "output/reference/lc_0.00.dat"
 
-img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
+img1, extent1 = get_image_data(filename1, gamma=0.6, debug=True)
 lc = get_lc_data(filename2)
 
 fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
 pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
 ax1.plot(lc['y1'], lc['y2'], color='red')
-pos2 = ax2.plot(lc['y1'], lc['ampl']/lc['norm']*(np.pi*0.3**2), '-')
+pos2 = ax2.plot(lc['y1'], lc['ampl']/lc['norm'], '-')
 #pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
 #pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
 ax1.set_title(filename1)
@@ -264,6 +255,53 @@ ax2.set_title(filename2)
 fig.colorbar(pos1, ax=ax1)
 fig.tight_layout()
 plt.show()
+
+# +
+filename1 = "output/reference/lc_0.00.dat"
+filename2 = "output/reference/lc_0.90.dat"
+
+lc1 = get_lc_data(filename1)
+lc2 = get_lc_data(filename2)
+
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
+pos1 = ax1.plot(lc1['y1'], lc1['ampl']/lc1['norm'], '-')
+pos2 = ax2.plot(lc2['y1'], lc2['ampl']/lc2['norm'], '-')
+ax1.set_title(filename1)
+ax2.set_title(filename2)
+fig.tight_layout()
+plt.show()
+
+# +
+fig, ax = plt.subplots(figsize=(15,4))
+
+ims = []
+
+for i in np.arange(0, 1, 0.1):
+    filename = "output/reference/lc_%.2f.dat" % i
+    lc = get_lc_data(filename)
+    ims.append(lc.copy())
+
+
+title = plt.text(0.5,1.01, "t=%.2f" % 0, ha="center",va="bottom", transform=ax.transAxes, fontsize="large")
+line1, = ax.plot(ims[9]['y1'], ims[9]['ampl']/ims[9]['norm'], '-')
+ax.set_ylim([None, np.max([np.max(lc['ampl']/lc['norm']) for lc in ims])])
+
+def init():
+    line1.set_ydata(lc['ampl']/lc['norm'])
+    return [line1]
+
+def animate(i):
+    title.set_text("t=%.2f" % (i * 0.1))
+    line1.set_ydata(ims[i]['ampl']/ims[i]['norm'])
+    return [line1]
+
+ani = animation.FuncAnimation(fig, animate, init_func=init, 
+                              blit=True, frames=10, repeat=True,
+                              interval=200, repeat_delay=1000)
+ani.save('result.mp4')
 # -
+
+
+
 
 

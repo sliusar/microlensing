@@ -29,10 +29,14 @@ image_y2_top: 15
 # LC configuration
 lc_enabled: true
 lc_start_y1: -10
-lc_start_y2: -10
+lc_start_y2: -1
 lc_end_y1: 10
-lc_end_y2: 10
-lc_step: 0.1
+lc_end_y2: 1
+lc_step: 0.01
+
+# Sources configuration
+
+
 
 ##########################
 # GPU:  MSI P104-100 8GB #

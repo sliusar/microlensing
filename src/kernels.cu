@@ -118,7 +118,6 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
     //    rays[ri].x1 = ray_x1;
     //    rays[ri].x2 = ray_x2;    
     //}
-/*
     if (ray_x1 >= c.image_y1_left && ray_x1 <= c.image_y1_right) {
       if (ray_x2 >= c.image_y2_bottom && ray_x2 <= c.image_y2_top) {
         int w = ((ray_x1 - c.image_y1_left) / c.image_pixel_y1_size);
@@ -126,27 +125,9 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
         if (w >= 0 && h >= 0 && w < c.image_width && h < c.image_height) atomicAdd(&image[w * c.image_height + h], 1);
       }
     }
-*/
-    int w = ((ray_x1 - c.image_y1_left) / c.image_pixel_y1_size);
-    int h = ((ray_x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
-    if (w >= 0 && h >= 0 && w < c.image_width && h < c.image_height) 
-    {
-      atomicAdd(&image[w * c.image_height + h], 1);
-      /*
-      for (int i = 0; i < c.nLCsteps; i++) {
-        float lc_y1 = lc[i + 0 * c.nLCsteps];
-        float lc_y2 = lc[i + 1 * c.nLCsteps];
-        float d = dst(lc_y1, lc_y2, ray_x1, ray_x2);
-        float sigma = 0.1;
-        float sigma2 = 0.01;
-        if (d < 4 * sigma) {
-            float val = expf(- d * d / sigma2);
-            //atomicAdd(&lc[i + 2 * c.nLCsteps], 1.0); // Normalization
-            //atomicAdd(&lc[i + 3 * c.nLCsteps], val); // Amplitude value, non-normalized
-        }
-      }
-      */
-    }
+//    int w = ((ray_x1 - c.image_y1_left) / c.image_pixel_y1_size);
+//    int h = ((ray_x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
+//    if (w >= 0 && h >= 0 && w < c.image_width && h < c.image_height) atomicAdd(&image[w * c.image_height + h], 1);
   }
 }
 
@@ -162,13 +143,16 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
       float lc_y1 = lc[i + 0 * c.nLCsteps];
       float lc_y2 = lc[i + 1 * c.nLCsteps];
       float d = dst(lc_y1 - r_x1, lc_y2 - r_x2);
-      float sigma = 0.5;
+      float sigma = 0.1;
       float sigma2 = sigma * sigma;
       if (d < 4 * sigma) {
-          float v = expf(- d * d / sigma2);
-          float val = image[w * c.image_height + h] * v;
-          atomicAdd(&lc[i + 2 * c.nLCsteps], v); // Normalization
-          atomicAdd(&lc[i + 3 * c.nLCsteps], val); // Amplitude value, non-normalized
+          int pix = image[w * c.image_height + h];
+          if (pix > 0) {
+            float v = expf(- d * d / sigma2);
+            float val = pix * v;
+            atomicAdd(&lc[i + 2 * c.nLCsteps], v); // Normalization
+            atomicAdd(&lc[i + 3 * c.nLCsteps], val); // Amplitude value, non-normalized  
+          }
       }
       //factorex = exp(-dist2 / sigsq2);
       //dum = pix[ix + i1 + (iy + i2) * pix_dim1];
@@ -177,33 +161,3 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
     }   
   }
 }
-
-
-__global__ void deflectRays123(Microlens *uls, Ray *rays, const Configuration c, const float t, int *image, float *lc) {
-  int ri = blockDim.x * blockIdx.x + threadIdx.x;
-  if (ri < c.nRays) {
-    float ray_x1 = rays[ri].x1;
-    float ray_x2 = rays[ri].x2;
-    float sum_x1 = 0.0;
-    float sum_x2 = 0.0;
-    for (int i = 0; i < c.nMicrolenses; i++) {
-      float m_x1 = ray_x1 - uls[i].x1 - (uls[i].v1 * t);
-      float m_x2 = ray_x2 - uls[i].x2 - (uls[i].v2 * t);
-      float ri = uls[i].m * dst2_inv(m_x1, m_x2);
-      sum_x1 += m_x1 * ri;
-      sum_x2 += m_x2 * ri;
-    }
-    //rays[ri].x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
-    //rays[ri].x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
-    //rays[ri].d = hypotf(rays[ri].x1 - c.image_center_y1, rays[ri].x2 - c.image_center_y2);
-    //int x = lrintf((rays[ri].x1 - c.image_y1_left) / c.image_pixel_y1_size);
-    //int y = lrintf((rays[ri].x2 - c.image_y2_bottom) / c.image_pixel_y2_size);
-
-    float r_x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
-    float r_x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
-    int x = (r_x1 - c.image_y1_left) / c.image_pixel_y1_size;
-    int y = (r_x2 - c.image_y2_bottom) / c.image_pixel_y2_size;
-    if (x >= 0 && x < c.image_width && y >= 0 && y < c.image_height) atomicAdd(&image[x * c.image_width + y], 1.0);
-  }
-}
-
