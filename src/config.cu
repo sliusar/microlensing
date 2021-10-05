@@ -3,6 +3,8 @@
 Configuration::Configuration(const char* filename) {
 
     YAML::Node config = YAML::LoadFile(filename);
+
+    debug = config["debug"].as<bool>();
     
     sigma = config["sigma"].as<float>();
     sigma_c = config["sigma_c"].as<float>();

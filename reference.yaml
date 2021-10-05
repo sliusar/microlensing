@@ -3,6 +3,7 @@ randomise_seed_number: 0 # if -1 than time is used, > 0 than this number is used
 configuration_id: "reference"
 save_images: true
 output_rays: false
+debug: false
 
 # GLS configuration
 sigma: 0.5
@@ -41,10 +42,10 @@ source_size: 0.2
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
-# Raytracing time: 5.96667s (mean: 0.596667s)
-# Output time: 13.3294s (mean: 1.33294s)
-# Total time: 20.7528s
+# Raytracing time: 5.94892s (mean: 0.594892s)
+# Output time: 12.9882s (mean: 1.29882s)
+# Total time: 20.4994s
 #
-# real    0m20.881s
-# user    0m8.215s
-# sys     0m12.455s
+# real 0m20.608s
+# user 0m7.985s
+# sys  0m12.431s

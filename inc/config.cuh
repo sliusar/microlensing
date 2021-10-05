@@ -4,9 +4,10 @@
 #include <common.cuh>
 
 class Configuration {
-    int debug;
     char* filename;
     public:
+        bool debug;
+
         bool save_images;
         int randomise_seed_number;
         float sigma, sigma_c, gamma, R_field, M_max, V_max, R_rays, dx_rays;
@@ -27,8 +28,6 @@ class Configuration {
 
         Configuration(const char *);
         ~Configuration() {};
-        void reconfigure();
-        void setdebug(bool);
         void display();
         void prepare_sources();
 };

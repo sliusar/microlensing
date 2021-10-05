@@ -13,6 +13,8 @@ using namespace std;
 
 #define LC_COLUMNS 10
 
+bool debug = false;
+
 int write_image(char* filename, int* image, int image_size) {
   ofstream wf(filename, ios::out | ios::binary);
   if(!wf) {
@@ -55,6 +57,7 @@ int main(const int argc, const char** argv) {
   Configuration conf(argv[1]);
   conf.prepare_sources();
   conf.display();
+  debug = conf.debug;
   if (conf.randomise_seed_number != 0) {
     long _seed = time(NULL);
     if (conf.randomise_seed_number > 0) _seed = conf.randomise_seed_number;

@@ -3,6 +3,7 @@ randomise_seed_number: 0 # if -1 than time is used, > 0 than this number is used
 configuration_id: "test"
 save_images: true
 output_rays: false
+debug: false
 
 # GLS configuration
 sigma: 0.5
