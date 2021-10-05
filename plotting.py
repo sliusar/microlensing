@@ -44,41 +44,7 @@ def density_scatter(x, y, bins=50, xlim=None, ylim=None, filename=None):
     plt.show()
     
 import matplotlib.animation as animation
-# -
-
-
-
-
-
-rays_y = np.loadtxt("./output/test/rays_0.00.dat")
-
-m = np.logical_and(np.abs(rays_y[:,0]) <= 100, np.abs(rays_y[:,1]) <= 100)
-x = rays_y[:,0][m]
-y = rays_y[:,1][m]
-density_scatter(x, y, bins=[200, 200])
-
-
 # +
-m = np.logical_and(np.abs(rays_y[:,0]) <= 20, np.abs(rays_y[:,1]) <= 20)
-x = rays_y[:,0][m]
-y = rays_y[:,1][m]
-density_scatter(x, y, bins=[200, 200])
-
-m = np.logical_and(np.abs(rays_y[:,0]) <= 15, np.abs(rays_y[:,1]) <= 15)
-x = rays_y[:,0][m]
-y = rays_y[:,1][m]
-density_scatter(x, y, bins=[200, 200])
-
-m = np.logical_and(np.abs(rays_y[:,0]) <= 30, np.abs(rays_y[:,1]) <= 30)
-x = rays_y[:,0][m]
-y = rays_y[:,1][m]
-density_scatter(x, y, bins=[500, 500])
-# -
-
-
-
-
-
 def get_image_data(filename, gamma=0.6, debug=False, hide_max=False, logscale=False):
     
     extent = None
@@ -111,112 +77,63 @@ def get_image_data(filename, gamma=0.6, debug=False, hide_max=False, logscale=Fa
         img[img == np.max(img)] = np.mean(img) # removing center-of-mass pixel with extreame amplification
     return img, extent
 
-
-
-# +
-filename1 = "output/test/image_0.00.dat"
-filename2 = "output/test/image_0.00.dat"
-
-img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
-img2, extent2 = get_image_data(filename2, gamma=1, debug=True)
-
-fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
-pos1 = ax1.imshow(img1, interpolation='none', extent=extent1, origin='lower')
-pos2 = ax2.imshow(img2, interpolation='none', extent=extent2, origin='lower')
-ax1.set_title(filename1)
-ax2.set_title(filename2)
-fig.colorbar(pos1, ax=ax1)
-fig.colorbar(pos2, ax=ax2)
-fig.tight_layout()
-plt.show()
-# -
-
-
-
-# +
-filename1 = "output/test/image_0.00.dat"
-filename2 = "output/test/image_0.00.dat"
-
-img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
-img2, extent2 = get_image_data(filename2, gamma=1, debug=True)
-
-fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
-pos1 = ax1.imshow(img1, interpolation='none', extent=extent1, origin='lower')
-pos2 = ax2.imshow(img2, interpolation='none', extent=extent2, origin='lower')
-ax1.set_title(filename1)
-ax2.set_title(filename2)
-fig.colorbar(pos1, ax=ax1)
-fig.colorbar(pos2, ax=ax2)
-fig.tight_layout()
-plt.show()
-# -
-
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
-# +
-fig, ax = plt.subplots(figsize=(10,10))
-
-ims = []
-
-for i in np.arange(0, 1, 0.1):
-    filename1 = "output/reference/image_%.2f.dat" % i
-    filename2 = "output/reference/lc_%.2f.dat" % i
-    img, extent = get_image_data(filename1, logscale=1)
-    lc = get_lc_data(filename2)    
-    title = plt.text(0.5,1.01, "t=%.2f" % i, ha="center",va="bottom", transform=ax.transAxes, fontsize="large")
-    text = ax.text('','','')
-    im = ax.imshow(img, extent=extent, origin='lower', interpolation='bicubic')
-    ax.plot(lc['y1'], lc['y2'], color='red')
-    ims.append([text, im, title])
-
-ani = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat=True, repeat_delay=1000)
-ani.save("images/reference_moving_stars.mp4")
-plt.show()
-# -
-
-
-
-
-# +
-filename1 = "output/reference/image_0.00.dat"
-filename2 = "output/reference/image_0.90.dat"
-
-img1, extent1 = get_image_data(filename1, logscale=1)
-img2, extent2 = get_image_data(filename2, logscale=1)
-
-fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
-pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
-pos2 = ax2.imshow(img2, interpolation='bessel', extent=extent2, origin='lower')
-ax1.set_title(filename1)
-ax2.set_title(filename2)
-fig.colorbar(pos1, ax=ax1)
-fig.colorbar(pos2, ax=ax2)
-fig.tight_layout()
-plt.show()
-# -
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import pandas as pd
-
-
 def get_lc_data(filename):
     data = np.loadtxt(filename)
     return pd.DataFrame(data=data.copy(), columns=["y1", "y2", "norm", "ampl"])
+# -
 
 
-# !pwd
+
+
+
+
+
+
+
+
+
+
+
+
+rays_y = np.loadtxt("./output/test/rays_0.00.dat")
+
+m = np.logical_and(np.abs(rays_y[:,0]) <= 100, np.abs(rays_y[:,1]) <= 100)
+x = rays_y[:,0][m]
+y = rays_y[:,1][m]
+density_scatter(x, y, bins=[200, 200])
+
+
+
+
+
+
+
+
+
+
+
+
+# +
+filename1 = "output/test/image_0.00.dat"
+filename2 = "output/test/image_0.00.dat"
+
+img1, extent1 = get_image_data(filename1, gamma=1, debug=True)
+img2, extent2 = get_image_data(filename2, gamma=1, debug=True)
+
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
+pos1 = ax1.imshow(img1, interpolation='none', extent=extent1, origin='lower')
+pos2 = ax2.imshow(img2, interpolation='none', extent=extent2, origin='lower')
+ax1.set_title(filename1)
+ax2.set_title(filename2)
+fig.colorbar(pos1, ax=ax1)
+fig.colorbar(pos2, ax=ax2)
+fig.tight_layout()
+plt.show()
+# -
+
+
+
+
 
 # +
 filename1 = "output/reference/image_0.00.dat"
@@ -236,29 +153,13 @@ ax2.set_title(filename2)
 fig.colorbar(pos1, ax=ax1)
 fig.tight_layout()
 plt.show()
+# -
+
+
 
 # +
-filename1 = "output/reference/image_0.00.dat"
-filename2 = "output/reference/lc_0.00.dat"
-
-img1, extent1 = get_image_data(filename1, gamma=0.6, debug=True)
-lc = get_lc_data(filename2)
-
-fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
-pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
-ax1.plot(lc['y1'], lc['y2'], color='red')
-pos2 = ax2.plot(lc['y1'], lc['ampl']/lc['norm'], '-')
-#pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
-#pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
-ax1.set_title(filename1)
-ax2.set_title(filename2)
-fig.colorbar(pos1, ax=ax1)
-fig.tight_layout()
-plt.show()
-
-# +
-filename1 = "output/reference/lc_0.00.dat"
-filename2 = "output/reference/lc_0.90.dat"
+filename1 = "output/test/lc_0.00.dat"
+filename2 = "output/test/lc_1.90.dat"
 
 lc1 = get_lc_data(filename1)
 lc2 = get_lc_data(filename2)
@@ -270,36 +171,47 @@ ax1.set_title(filename1)
 ax2.set_title(filename2)
 fig.tight_layout()
 plt.show()
+# -
+
+
+
+
+
 
 # +
-fig, ax = plt.subplots(figsize=(15,4))
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+    
+fig, (ax1, ax2) = plt.subplots(2,1, figsize=(9, 11), gridspec_kw={'height_ratios': [10, 1]})
+fig.tight_layout()
 
 ims = []
+max_ampl = []
+for t in np.arange(0, 10, 0.1):
+    print("t=%.2f" % t)
+    filename1 = "output/test/image_%.2f.dat" % t
+    filename2 = "output/test/lc_%.2f.dat" % t
+    img, extent = get_image_data(filename1, logscale=True)
+    lc = get_lc_data(filename2)
+    title = ax1.text(0.5,1.01, "t=%.2f" % t, ha="center",va="bottom", transform=ax1.transAxes, fontsize="large")
+    line1 = ax1.imshow(img, interpolation='none', extent=extent, origin='lower')
+    ax1.plot(lc['y1'], lc['y2'], color='red')
+    line2, = ax2.plot(lc['y1'], lc['ampl']/lc['norm'], '-', color='black')
+    max_ampl.append(np.max(lc['ampl']/lc['norm']))
+    ims.append([line1, line2, title])
 
-for i in np.arange(0, 1, 0.1):
-    filename = "output/reference/lc_%.2f.dat" % i
-    lc = get_lc_data(filename)
-    ims.append(lc.copy())
+for l in ims:
+    _l1, _l2, _t = l
+    _l2.axes.set_ylim([None, 1.05 * max(max_ampl)])
 
-
-title = plt.text(0.5,1.01, "t=%.2f" % 0, ha="center",va="bottom", transform=ax.transAxes, fontsize="large")
-line1, = ax.plot(ims[9]['y1'], ims[9]['ampl']/ims[9]['norm'], '-')
-ax.set_ylim([None, np.max([np.max(lc['ampl']/lc['norm']) for lc in ims])])
-
-def init():
-    line1.set_ydata(lc['ampl']/lc['norm'])
-    return [line1]
-
-def animate(i):
-    title.set_text("t=%.2f" % (i * 0.1))
-    line1.set_ydata(ims[i]['ampl']/ims[i]['norm'])
-    return [line1]
-
-ani = animation.FuncAnimation(fig, animate, init_func=init, 
-                              blit=True, frames=10, repeat=True,
-                              interval=200, repeat_delay=1000)
-ani.save('images/reference_lc_moving_stars.mp4')
+ani = animation.ArtistAnimation(fig, ims, interval=200, blit=True, repeat=False)
+ani.save('images/dynamic_images.mp4')
+plt.show()
 # -
+
+
+
 
 
 

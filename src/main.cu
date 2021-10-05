@@ -13,6 +13,20 @@ using namespace std;
 
 #define LC_COLUMNS 4
 
+int write_image(char* filename, int* image, int image_size) {
+  ofstream wf(filename, ios::out | ios::binary);
+  if(!wf) {
+     cout << "Cannot open file " << filename << endl;
+     return 1;
+  }
+  wf.write((char *)&image_size, sizeof(image_size));
+  wf.close();
+  if(!wf.good()) {
+     cout << "Error occurred at writing of" << filename << endl;
+     return 1;
+  }
+}
+
 int estimateRaysCount(float R_rays, float dx_rays) {
   int counter = 0;
   for (float x1 = - R_rays; x1 <= R_rays; x1 += dx_rays) {
@@ -86,7 +100,7 @@ int main(const int argc, const char** argv) {
   cout << GetElapsedTime() << "s" << endl;
 
   if (conf.lc_enabled) {
-    cout << "Creating LC trajectory ... " << flush;
+    cout << "Creating light curve placeholder ... " << flush;
     StartTimer();
     createTrajectory(lc, conf);
     cudaMalloc(&lc_buf, lc_bytes);
@@ -116,6 +130,9 @@ int main(const int argc, const char** argv) {
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
     memset(image, 0, image_bytes);
     cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
+
+    resetTrajectory(lc, conf);
+    cudaMemcpy(lc_buf, lc, lc_bytes, cudaMemcpyHostToDevice);
 
     cout << endl << ">>> Iteration #" << ++counter << ", t=" << t << endl;
     

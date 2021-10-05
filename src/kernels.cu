@@ -58,14 +58,21 @@ void createTrajectory(float *lc_trajectory, const Configuration conf) {
     float step_y1 = conf.lc_step * (conf.lc_end_y1 - conf.lc_start_y1)/l;
     float step_y2 = conf.lc_step * (conf.lc_end_y2 - conf.lc_start_y2)/l;
     for (float y1 = conf.lc_start_y1, y2 = conf.lc_start_y2; (y1 < conf.lc_end_y1 && y2 < conf.lc_end_y2); y1+=step_y1, y2+=step_y2) {
-        //i_y1 = round((y1 - conf.image_y1_left) / conf.image_pixel_y1_size);
-        //i_y2 = round((y2 - conf.image_y2_bottom) / conf.image_pixel_y2_size);
-        lc_trajectory[counter + 0 * conf.nLCsteps] = y1; // Y1 coordinate
-        lc_trajectory[counter + 1 * conf.nLCsteps] = y2; // Y2 coordinate
-        lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Gauss amplitude normalization value
-        lc_trajectory[counter + 3 * conf.nLCsteps] = 0.0; // Gauss amplitude value
-        counter++;
+        if (counter < conf.nLCsteps) {
+          lc_trajectory[counter + 0 * conf.nLCsteps] = y1; // Y1 coordinate
+          lc_trajectory[counter + 1 * conf.nLCsteps] = y2; // Y2 coordinate
+          lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Gauss amplitude normalization value
+          lc_trajectory[counter + 3 * conf.nLCsteps] = 0.0; // Gauss amplitude value
+          counter++;
+        }
     }
+}
+
+void resetTrajectory(float *lc_trajectory, const Configuration conf) {
+  for (int counter = 0; counter < conf.nLCsteps; counter++) {
+    lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Gauss amplitude normalization value
+    lc_trajectory[counter + 3 * conf.nLCsteps] = 0.0; // Gauss amplitude value
+  }
 }
 
 void printLC(float *lc, int c) {

@@ -11,6 +11,7 @@ float distance(float, float);
 void randomiseMicrolenses(Microlens*, Configuration);
 void populateRays(Ray *, int, float, float);
 void createTrajectory(float *, const Configuration);
+void resetTrajectory(float *, const Configuration);
 void printLC(float *, int);
 
 __device__ float dst2_inv(float, float);
