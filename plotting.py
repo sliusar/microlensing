@@ -195,7 +195,7 @@ import matplotlib.animation as animation
     
 fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5,1, figsize=(10, 14), gridspec_kw={'height_ratios': [10, 1, 1, 1, 1]})
 fig.tight_layout()
-fig.subplots_adjust(left=0.09)
+fig.subplots_adjust(left=0.09, top=0.98)
 
 ims = []
 max_ampl = []

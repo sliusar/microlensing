@@ -8,11 +8,11 @@ output_rays: false
 sigma: 0.5
 sigma_c: 0
 gamma: 0.1
-R_field: 100
-M_max: 1.0
-V_max: 1.0
-dt: 0.1
-t_max: 1
+R_field: 100 # the radius of microlenses field
+M_max: 1.0 # the microlenses masses will be in the range (0, M_max)
+V_max: 1.0 # the microlenses velocities will be in the range (-V_max, V_max)
+dt: 0.1 # time step
+t_max: 1 # time will be in the range [0, t_max) with a step dt
 
 # Rays configuration
 R_rays: 100
@@ -41,10 +41,10 @@ source_size: 0.2
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
-
-## output_rays: false
-# Raytracing time: 5.96068s (mean: 0.596068s)
-# Output time: 13.1422s (mean: 1.31422s)
-# real    0m20.338s
-# user    0m7.859s
-# sys     0m12.242s
+# Raytracing time: 5.96667s (mean: 0.596667s)
+# Output time: 13.3294s (mean: 1.33294s)
+# Total time: 20.7528s
+#
+# real    0m20.881s
+# user    0m8.215s
+# sys     0m12.455s

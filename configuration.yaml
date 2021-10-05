@@ -9,10 +9,10 @@ sigma: 0.5
 sigma_c: 0
 gamma: 0.1
 R_field: 100 # the radius of microlenses field
-M_max: 1.0 # the microlenses masses will be in the range [0, M_max]
-V_max: 1.0 # the microlenses velocities will be in the range [-V_max, V_max]
+M_max: 1.0 # the microlenses masses will be in the range (0, M_max)
+V_max: 1.0 # the microlenses velocities will be in the range (-V_max, V_max)
 dt: 0.1 # time step
-t_max: 25 # time will be in the range [0, t_max] with the step dt
+t_max: 25 # time will be in the range [0, t_max) with a step dt
 
 # Rays configuration
 R_rays: 100
