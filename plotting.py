@@ -44,9 +44,6 @@ def density_scatter(x, y, bins=50, xlim=None, ylim=None, filename=None):
     plt.show()
     
 import matplotlib.animation as animation
-# -
-
-
 # +
 def get_image_data(filename, gamma=0.6, debug=False, hide_max=False, logscale=False):
     with open(filename, "rb") as f:
@@ -95,6 +92,8 @@ m = np.logical_and(np.abs(rays_y[:,0]) <= 100, np.abs(rays_y[:,1]) <= 100)
 x = rays_y[:,0][m]
 y = rays_y[:,1][m]
 density_scatter(x, y, bins=[200, 200])
+
+
 
 
 
@@ -197,7 +196,7 @@ s_ad_max = 0
 s_gs_max = 0
 s_ld_max = 0
 s_pl_max = 0
-for t in np.arange(0, 25, 0.1):
+for t in np.arange(0, 50, 0.1):
     if 10 * t % 10 == 0:
         print("t=%.2f" % t)
     filename1 = "output/test/image_%.2f.dat" % t
