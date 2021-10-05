@@ -11,7 +11,7 @@ using namespace std;
 #define CUDA_BLOCK_SIZE 1024
 #define CUDA_BLOCK_SIZE_2d 32
 
-#define LC_COLUMNS 4
+#define LC_COLUMNS 10
 
 int write_image(char* filename, int* image, int image_size) {
   ofstream wf(filename, ios::out | ios::binary);
@@ -27,6 +27,12 @@ int write_image(char* filename, int* image, int image_size) {
   }
 }
 
+double getCurrentTimestamp() {
+  struct timeval time_now{};
+  gettimeofday(&time_now, nullptr);
+  return time_now.tv_sec + ((double)time_now.tv_usec / 1e6);
+}
+
 int estimateRaysCount(float R_rays, float dx_rays) {
   int counter = 0;
   for (float x1 = - R_rays; x1 <= R_rays; x1 += dx_rays) {
@@ -38,6 +44,7 @@ int estimateRaysCount(float R_rays, float dx_rays) {
 }
 
 int main(const int argc, const char** argv) {
+  double t0 = getCurrentTimestamp();
   if (argc != 2) {
     cerr << "Usage:\n\t" << argv[0] << " configuration.yaml" << endl;
     return 1;
@@ -46,6 +53,7 @@ int main(const int argc, const char** argv) {
   char filename[64], output_folder[64];
 
   Configuration conf(argv[1]);
+  conf.prepare_sources();
   conf.display();
   if (conf.randomise_seed_number != 0) {
     long _seed = time(NULL);
@@ -127,6 +135,7 @@ int main(const int argc, const char** argv) {
   float t_raytracing = 0;
   float t_output = 0;
   float t_lc = 0;
+  
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
     memset(image, 0, image_bytes);
     cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
@@ -134,7 +143,7 @@ int main(const int argc, const char** argv) {
     resetTrajectory(lc, conf);
     cudaMemcpy(lc_buf, lc, lc_bytes, cudaMemcpyHostToDevice);
 
-    cout << endl << ">>> Iteration #" << ++counter << ", t=" << t << endl;
+    cout << endl << ">>> Iteration #" << ++counter << ", t=" << t << " (elapsed: " << getCurrentTimestamp() - t0 << "s)" << endl;
     
     cout << "    [CUDA] Running ray tracing ... " << flush;
     StartTimer();
@@ -208,7 +217,12 @@ int main(const int argc, const char** argv) {
       outf.open(filename);
       int c = conf.nLCsteps;
       for (int i = 0; i < c; i++) {
-        outf << lc[i + 0 * c] << " " << lc[i + 1 * c] << " " << lc[i + 2 * c] << " " << lc[i + 3 * c] << endl;
+        outf << lc[i + 0 * c] << " " << lc[i + 1 * c] << " ";
+        outf << lc[i + 2 * c] << " " << lc[i + 3 * c] << " ";
+        outf << lc[i + 4 * c] << " " << lc[i + 5 * c] << " ";
+        outf << lc[i + 6 * c] << " " << lc[i + 7 * c] << " ";
+        outf << lc[i + 8 * c] << " " << lc[i + 9 * c] << " ";
+        outf << endl;
       }
       outf.close();
       _t = GetElapsedTime();
@@ -217,19 +231,20 @@ int main(const int argc, const char** argv) {
     }
   }
 
-  cout << endl << ">>> Run summary:" << endl;
-  cout << "    Raytracing time: " << t_raytracing << "s (mean: " << t_raytracing/counter << "s)" << endl;
-  cout << "    Output time: " << t_output << "s (mean: " << t_output / counter << "s)" << endl;
-
-  //if (conf.lc_enabled) printLC(lc, conf.nLCsteps);
-
   free(microlenses);
   free(rays);
   free(image);
+  free(lc);
   
   cudaFree(ul_buf);
+  cudaFree(lc_buf);
   cudaFree(rays_buf);
   cudaFree(image_buf);
+
+  cout << endl << ">>> Run summary:" << endl;
+  cout << "    Raytracing time: " << t_raytracing << "s (mean: " << t_raytracing/counter << "s)" << endl;
+  cout << "    Output time: " << t_output << "s (mean: " << t_output / counter << "s)" << endl;
+  cout << "    Total time: " << getCurrentTimestamp() - t0 << "s" << endl;
 
   return 0;
 }

@@ -12,7 +12,8 @@ float distance(float x, float y) {
 void randomiseMicrolenses(Microlens *ul, Configuration conf) {
   int n = conf.nMicrolenses;
   float R = conf.R_field;
-  float M = conf.M_avg;
+  float M = conf.M_max;
+  float V = conf.V_max;
 
   for (int i = 0; i < n; i++) {
     float x1 = 2 * R * (rand() / (float)RAND_MAX) - R;
@@ -25,10 +26,9 @@ void randomiseMicrolenses(Microlens *ul, Configuration conf) {
     ul[i] = {.x1 = x1, .x2 = x2, .v1 = 0.0, .v2 = 0.0, .m = 1.0 };
   }
 
-  float speed_range_radius = 1;
   for (int i = 0; i < n; i++) {
-    float v1 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
-    float v2 = speed_range_radius * (rand() / (float)RAND_MAX) - speed_range_radius;
+    float v1 = V * (rand() / (float)RAND_MAX) - V;
+    float v2 = V * (rand() / (float)RAND_MAX) - V;
     ul[i].v1 = v1;
     ul[i].v2 = v2;
   }
@@ -61,8 +61,14 @@ void createTrajectory(float *lc_trajectory, const Configuration conf) {
         if (counter < conf.nLCsteps) {
           lc_trajectory[counter + 0 * conf.nLCsteps] = y1; // Y1 coordinate
           lc_trajectory[counter + 1 * conf.nLCsteps] = y2; // Y2 coordinate
-          lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Gauss amplitude normalization value
-          lc_trajectory[counter + 3 * conf.nLCsteps] = 0.0; // Gauss amplitude value
+          lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Normalization value
+          lc_trajectory[counter + 3 * conf.nLCsteps] = 0.0; // Amplitude value
+          lc_trajectory[counter + 4 * conf.nLCsteps] = 0.0; // Normalization value
+          lc_trajectory[counter + 5 * conf.nLCsteps] = 0.0; // Amplitude value
+          lc_trajectory[counter + 6 * conf.nLCsteps] = 0.0; // Normalization value
+          lc_trajectory[counter + 7 * conf.nLCsteps] = 0.0; // Amplitude value
+          lc_trajectory[counter + 8 * conf.nLCsteps] = 0.0; // Normalization value
+          lc_trajectory[counter + 9 * conf.nLCsteps] = 0.0; // Amplitude value
           counter++;
         }
     }
@@ -70,8 +76,14 @@ void createTrajectory(float *lc_trajectory, const Configuration conf) {
 
 void resetTrajectory(float *lc_trajectory, const Configuration conf) {
   for (int counter = 0; counter < conf.nLCsteps; counter++) {
-    lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Gauss amplitude normalization value
-    lc_trajectory[counter + 3 * conf.nLCsteps] = 0.0; // Gauss amplitude value
+    lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Normalization value
+    lc_trajectory[counter + 3 * conf.nLCsteps] = 0.0; // Amplitude value
+    lc_trajectory[counter + 4 * conf.nLCsteps] = 0.0; // Normalization value
+    lc_trajectory[counter + 5 * conf.nLCsteps] = 0.0; // Amplitude value
+    lc_trajectory[counter + 6 * conf.nLCsteps] = 0.0; // Normalization value
+    lc_trajectory[counter + 7 * conf.nLCsteps] = 0.0; // Amplitude value
+    lc_trajectory[counter + 8 * conf.nLCsteps] = 0.0; // Normalization value
+    lc_trajectory[counter + 9 * conf.nLCsteps] = 0.0; // Amplitude value
   }
 }
 
@@ -94,8 +106,8 @@ __device__ float dst(float x1, float y1, float x2, float y2) {
   return hypotf(x1 - x2, y1 - y2);
 }
 
-__device__ float H(float a, float x) {
-  return (x >= a) ? 1.0 : 0.0;
+__device__ float H(float x) {
+  return (x > 0) ? 1.0 : 0.0;
 }
 
 __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, int *image, float* lc) {
@@ -107,7 +119,7 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
   //if (ri < c.nRays) {
   //  double ray_x1 = rays[ri].x1;
   //  double ray_x2 = rays[ri].x2;
-  float test = 0;
+
   if (dst(ray_x1, ray_x2) <= c.R_rays) {
     float sum_x1 = 0.0;
     float sum_x2 = 0.0;
@@ -146,19 +158,32 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
     float r_x1 = w * c.image_pixel_y1_size + c.image_y1_left;
     float r_x2 = h * c.image_pixel_y2_size + c.image_y2_bottom;
   
+    float factorex_gs, factorex_ld, factorex_pl, factorex_ad;
     for (int i = 0; i < c.nLCsteps; i++) {
       float lc_y1 = lc[i + 0 * c.nLCsteps];
       float lc_y2 = lc[i + 1 * c.nLCsteps];
       float d = dst(lc_y1 - r_x1, lc_y2 - r_x2);
-      float sigma = 0.1;
-      float sigma2 = sigma * sigma;
-      if (d < 4 * sigma) {
+      float d2 = d * d;
+      if (d < 10 * c.R_gs) {
           int pix = image[w * c.image_height + h];
           if (pix > 0) {
-            float v = expf(- d * d / sigma2);
-            float val = pix * v;
-            atomicAdd(&lc[i + 2 * c.nLCsteps], v); // Normalization
-            atomicAdd(&lc[i + 3 * c.nLCsteps], val); // Amplitude value, non-normalized  
+            factorex_gs = expf(- d2 / c.R2_gs);
+            factorex_ld = ((c.p_ld + 1)/(M_PI * c.R2_ld)) * H(1 - d2/c.R2_ld) * pow(1 - d2/c.R2_ld, c.p_ld);
+            factorex_pl = ((c.p_pl - 1)/(M_PI * c.R2_pl)) * (1/pow(1 + d2/c.R2_pl, c.p_pl));
+            if (d > c.R_ad) {
+              factorex_ad = (3 * c.R_ad  / (2 * M_PI * pow(d, 3))) * (1 - sqrt(c.R_ad/d));
+              atomicAdd(&lc[i + 2 * c.nLCsteps], factorex_ad); // Normalization
+              atomicAdd(&lc[i + 3 * c.nLCsteps], pix * factorex_ad); // Amplitude value, non-normalized  
+            }
+            
+            atomicAdd(&lc[i + 4 * c.nLCsteps], factorex_gs); // Normalization
+            atomicAdd(&lc[i + 5 * c.nLCsteps], pix * factorex_gs); // Amplitude value, non-normalized  
+
+            atomicAdd(&lc[i + 6 * c.nLCsteps], factorex_ld); // Normalization
+            atomicAdd(&lc[i + 7 * c.nLCsteps], pix * factorex_ld); // Amplitude value, non-normalized  
+
+            atomicAdd(&lc[i + 8 * c.nLCsteps], factorex_pl); // Normalization
+            atomicAdd(&lc[i + 9 * c.nLCsteps], pix * factorex_pl); // Amplitude value, non-normalized  
           }
       }
       //factorex = exp(-dist2 / sigsq2);

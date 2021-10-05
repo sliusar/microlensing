@@ -79,7 +79,7 @@ def get_image_data(filename, gamma=0.6, debug=False, hide_max=False, logscale=Fa
 
 def get_lc_data(filename):
     data = np.loadtxt(filename)
-    return pd.DataFrame(data=data.copy(), columns=["y1", "y2", "norm", "ampl"])
+    return pd.DataFrame(data=data.copy(), columns=["y1", "y2", "n_ad", "a_ad",  "n_gs", "a_gs",  "n_ld", "a_ld", "n_pl", "a_pl"])
 # -
 
 
@@ -158,15 +158,25 @@ plt.show()
 
 
 # +
-filename1 = "output/test/lc_0.00.dat"
-filename2 = "output/test/lc_1.90.dat"
+filename1 = "output/reference/lc_0.00.dat"
+filename2 = "output/reference/lc_0.90.dat"
 
 lc1 = get_lc_data(filename1)
 lc2 = get_lc_data(filename2)
 
 fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
-pos1 = ax1.plot(lc1['y1'], lc1['ampl']/lc1['norm'], '-')
-pos2 = ax2.plot(lc2['y1'], lc2['ampl']/lc2['norm'], '-')
+pos1 = ax1.plot(lc1['y1'], lc1['a_ad']/lc1['n_ad'], '-', label='ad')
+ax1.plot(lc1['y1'], lc1['a_gs']/lc1['n_gs'], '-', label='gs')
+ax1.plot(lc1['y1'], lc1['a_ld']/lc1['n_ld'], '-', label='ld')
+ax1.plot(lc1['y1'], lc1['a_pl']/lc1['n_pl'], '-', label='pl')
+ax1.legend()
+
+pos2 = ax2.plot(lc2['y1'], lc2['a_ad']/lc2['n_ad'], '-', label='ad')
+ax2.plot(lc2['y1'], lc2['a_gs']/lc2['n_gs'], '-', label='gs')
+ax2.plot(lc2['y1'], lc2['a_ld']/lc2['n_ld'], '-', label='ld')
+ax2.plot(lc2['y1'], lc2['a_pl']/lc2['n_pl'], '-', label='pl')
+ax2.legend()
+
 ax1.set_title(filename1)
 ax2.set_title(filename2)
 fig.tight_layout()
@@ -183,12 +193,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
     
-fig, (ax1, ax2) = plt.subplots(2,1, figsize=(9, 11), gridspec_kw={'height_ratios': [10, 1]})
+fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5,1, figsize=(10, 14), gridspec_kw={'height_ratios': [10, 1, 1, 1, 1]})
 fig.tight_layout()
+fig.subplots_adjust(left=0.09)
 
 ims = []
 max_ampl = []
-for t in np.arange(0, 10, 0.1):
+s_ad_max = 0
+s_gs_max = 0
+s_ld_max = 0
+s_pl_max = 0
+for t in np.arange(0, 25, 0.1):
     print("t=%.2f" % t)
     filename1 = "output/test/image_%.2f.dat" % t
     filename2 = "output/test/lc_%.2f.dat" % t
@@ -197,23 +212,39 @@ for t in np.arange(0, 10, 0.1):
     title = ax1.text(0.5,1.01, "t=%.2f" % t, ha="center",va="bottom", transform=ax1.transAxes, fontsize="large")
     line1 = ax1.imshow(img, interpolation='none', extent=extent, origin='lower')
     ax1.plot(lc['y1'], lc['y2'], color='red')
-    line2, = ax2.plot(lc['y1'], lc['ampl']/lc['norm'], '-', color='black')
-    max_ampl.append(np.max(lc['ampl']/lc['norm']))
-    ims.append([line1, line2, title])
+    
+    s_ad = lc['a_ad']/lc['n_ad']
+    line2, = ax2.plot(lc['y1'], s_ad, '-', color='black')
+    ax2.set_ylabel('AD')
+    if max(s_ad) > s_ad_max: s_ad_max = max(s_ad)
+        
+    s_gs = lc['a_gs']/lc['n_gs']
+    line3, = ax3.plot(lc['y1'], s_gs, '-', color='black')
+    ax3.set_ylabel('Gauss')
+    if max(s_gs) > s_gs_max: s_gs_max = max(s_gs)
+
+    s_ld = lc['a_ld']/lc['n_ld']
+    line4, = ax4.plot(lc['y1'], s_ld, '-', color='black')
+    ax4.set_ylabel('LD')
+    if max(s_ld) > s_ld_max: s_ld_max = max(s_ld)
+
+    s_pl = lc['a_pl']/lc['n_pl']
+    line5, = ax5.plot(lc['y1'], s_pl, '-', color='black')
+    ax5.set_ylabel('PL')
+    if max(s_pl) > s_pl_max: s_pl_max = max(s_ld)
+
+    ims.append([line1, line2, line3, line4, line5, title])
 
 for l in ims:
-    _l1, _l2, _t = l
-    _l2.axes.set_ylim([None, 1.05 * max(max_ampl)])
+    _l1, _l2, _l3, _l4, _l5, _t = l
+    _l2.axes.set_ylim([None, 1.05 * s_ad_max])
+    _l3.axes.set_ylim([None, 1.05 * s_gs_max])
+    _l4.axes.set_ylim([None, 1.05 * s_ld_max])
+    _l5.axes.set_ylim([None, 1.05 * s_pl_max])
 
 ani = animation.ArtistAnimation(fig, ims, interval=200, blit=True, repeat=False)
 ani.save('images/dynamic_images.mp4')
 plt.show()
 # -
-
-
-
-
-
-
 
 

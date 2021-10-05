@@ -9,7 +9,8 @@ sigma: 0.5
 sigma_c: 0
 gamma: 0.1
 R_field: 100
-M_avg: 1.0
+M_max: 1.0
+V_max: 1.0
 dt: 0.1
 t_max: 1
 
@@ -35,23 +36,15 @@ lc_end_y2: 1
 lc_step: 0.01
 
 # Sources configuration
-
-
+source_size: 0.2
 
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
 
 ## output_rays: false
-# Raytracing time: 16.3184s (mean: 1.63184s)
-# Output time: 12.3643s (mean: 1.23643s)
-# real    0m29.904s
-# user    0m14.990s
-# sys     0m14.754s
-
-## output_rays: true
-# Raytracing time: 23.0291s (mean: 2.30291s)
-# Output time: 12.3677s (mean: 1.23677s)
-# real    0m36.423s
-# user    0m19.865s
-# sys     0m16.461s
+# Raytracing time: 5.96068s (mean: 0.596068s)
+# Output time: 13.1422s (mean: 1.31422s)
+# real    0m20.338s
+# user    0m7.859s
+# sys     0m12.242s
