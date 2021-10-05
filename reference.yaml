@@ -42,10 +42,10 @@ source_size: 0.2
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
-# Raytracing time: 5.94892s (mean: 0.594892s)
-# Output time: 12.9882s (mean: 1.29882s)
-# Total time: 20.4994s
+# Raytracing time: 6.09938s (mean: 0.609938s)
+# Output time: 0.274152s (mean: 0.0274152s)
+# Total time: 7.84899s
 #
-# real 0m20.608s
-# user 0m7.985s
-# sys  0m12.431s
+# real    0m7.956s
+# user    0m5.431s
+# sys     0m2.280s

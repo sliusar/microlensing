@@ -15,18 +15,21 @@ using namespace std;
 
 bool debug = false;
 
-int write_image(char* filename, int* image, int image_size) {
-  ofstream wf(filename, ios::out | ios::binary);
-  if(!wf) {
-     cout << "Cannot open file " << filename << endl;
-     return 1;
+int write_image(char* filename, int* image, Configuration c) {
+  FILE *fp = fopen(filename, "wb");
+  if(fp == NULL) {
+    cout << "Error opening the file " << filename << endl;
+    return -1;
   }
-  wf.write((char *)&image_size, sizeof(image_size));
-  wf.close();
-  if(!wf.good()) {
-     cout << "Error occurred at writing of" << filename << endl;
-     return 1;
-  }
+  fwrite((const void*)&c.image_width, sizeof(c.image_width), 1, fp);
+  fwrite((const void*)&c.image_height, sizeof(c.image_height), 1, fp);
+  fwrite((const void*)&c.image_y1_left, sizeof(c.image_y1_left), 1, fp);
+  fwrite((const void*)&c.image_y1_right, sizeof(c.image_y1_right), 1, fp);
+  fwrite((const void*)&c.image_y2_bottom, sizeof(c.image_y2_bottom), 1, fp);
+  fwrite((const void*)&c.image_y2_top, sizeof(c.image_y2_top), 1, fp);
+  fwrite((const void*)&image[0], sizeof(image[0]), c.image_width * c.image_height, fp);
+  fclose(fp);
+  return 0;
 }
 
 double getCurrentTimestamp() {
@@ -195,17 +198,18 @@ int main(const int argc, const char** argv) {
     if (conf.save_images) {
       StartTimer();
       cout << "    Writing data to " << filename << " ... " << flush;
-      outf.open(filename);
-      outf << "# image (" << conf.image_width << ", " << conf.image_height << ")" << endl;
-      outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;
-      outf << "# y in (" << conf.image_y2_bottom << ", " << conf.image_y2_top << ")" << endl;
+      write_image(filename, image, conf);
+      //outf.open(filename);
+      //outf << "# image (" << conf.image_width << ", " << conf.image_height << ")" << endl;
+      //outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;
+      //outf << "# y in (" << conf.image_y2_bottom << ", " << conf.image_y2_top << ")" << endl;
 
-      for (int j = 0; j < conf.image_height; j++) {
-        for (int i = 0; i < conf.image_width; i++) {
-          outf << image[i * conf.image_width + j] << endl;
-        }
-      }
-      outf.close();
+      //for (int j = 0; j < conf.image_height; j++) {
+      //  for (int i = 0; i < conf.image_width; i++) {
+      //    outf << image[i * conf.image_width + j] << endl;
+      //  }
+      //}
+      //outf.close();
       _t = GetElapsedTime();
       t_output += _t;
       cout << _t << "s" << endl;  

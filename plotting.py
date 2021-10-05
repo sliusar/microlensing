@@ -44,38 +44,32 @@ def density_scatter(x, y, bins=50, xlim=None, ylim=None, filename=None):
     plt.show()
     
 import matplotlib.animation as animation
+# -
+
+
 # +
 def get_image_data(filename, gamma=0.6, debug=False, hide_max=False, logscale=False):
-    
-    extent = None
-    image_size = None
-    with open(filename, 'r') as f:
-        header0 = f.readline().strip()
-        header1 = f.readline().strip()
-        header2 = f.readline().strip()
+    with open(filename, "rb") as f:
+        image_size = np.fromfile(f, dtype=np.int32, count=2)
+        extent = np.fromfile(f, dtype=np.float32, count=4)
+        image = np.fromfile(f, dtype=np.int32).reshape(image_size).T.astype(np.float)
 
-        _s = re.split('\(|\,|\)', header0)
-        _x = re.split('\(|\,|\)', header1)
-        _y = re.split('\(|\,|\)', header2)
-        image_size = [int(_s[1]),int(_s[2])]
-        extent = [float(_x[1]),float(_x[2]),float(_y[1]),float(_y[2])]
-    image = np.loadtxt(filename).reshape(image_size)
-    if (debug):
-        _all = image.shape[0] * image.shape[1]
-        _z = image[image == 0].shape[0]
-        print(f"{filename}")
-        print(f"\tzeros: {_z} ({100 * _z/_all}%)")
-        print(f"\tmean & std: {np.mean(image)} +- {np.std(image)}")
-        print(f"\ttotal_rays: {np.sum(image)}")
-    
-    img = np.zeros_like(image)
-    if gamma is not None:
-        img[image > 0] = image[image > 0]**gamma
-    if logscale is not None and logscale:
-        img[image > 0] = np.log10(image[image > 0])
-    if img[img == np.max(img)].shape[0] < 5 and hide_max:
-        img[img == np.max(img)] = np.mean(img) # removing center-of-mass pixel with extreame amplification
-    return img, extent
+        if (debug):
+            _all = image.shape[0] * image.shape[1]
+            _z = image[image == 0].shape[0]
+            print(f"{filename}")
+            print(f"\tzeros: {_z} ({100 * _z/_all}%)")
+            print(f"\tmean & std: {np.mean(image)} +- {np.std(image)}")
+            print(f"\ttotal_rays: {np.sum(image)}")
+
+        img = np.zeros_like(image)
+        if gamma is not None:
+            img[image > 0] = image[image > 0]**gamma
+        if logscale is not None and logscale:
+            img[image > 0] = np.log10(image[image > 0])
+        if img[img == np.max(img)].shape[0] < 5 and hide_max:
+            img[img == np.max(img)] = np.mean(img) # removing center-of-mass pixel with extreame amplification
+        return img, extent
 
 def get_lc_data(filename):
     data = np.loadtxt(filename)
@@ -139,13 +133,13 @@ plt.show()
 filename1 = "output/reference/image_0.00.dat"
 filename2 = "output/reference/lc_0.00.dat"
 
-img1, extent1 = get_image_data(filename1, gamma=0.6, debug=True)
+img1, extent1 = get_image_data(filename1, logscale=True, debug=True)
 lc = get_lc_data(filename2)
 
 fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
 pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
 ax1.plot(lc['y1'], lc['y2'], color='red')
-pos2 = ax2.plot(lc['y1'], lc['ampl']/lc['norm'], '-')
+pos2 = ax2.plot(lc['y1'], lc['a_gs']/lc['n_gs'], '-')
 #pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
 #pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
 ax1.set_title(filename1)
@@ -204,7 +198,8 @@ s_gs_max = 0
 s_ld_max = 0
 s_pl_max = 0
 for t in np.arange(0, 25, 0.1):
-    print("t=%.2f" % t)
+    if 10 * t % 10 == 0:
+        print("t=%.2f" % t)
     filename1 = "output/test/image_%.2f.dat" % t
     filename2 = "output/test/lc_%.2f.dat" % t
     img, extent = get_image_data(filename1, logscale=True)
