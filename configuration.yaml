@@ -1,6 +1,6 @@
 # General configuration
-randomise_seed_number: 0 # if -1 than time is used, > 0 than this number is used
-configuration_id: "test"
+randomise_seed_number: 1234567891 # if -1 than time is used, > 0 than this number is used
+configuration_id: "test1234567891"
 save_images: true
 output_rays: false
 debug: false
@@ -32,9 +32,9 @@ image_y2_top: 15
 lc_enabled: true
 lc_start_y1: -10
 lc_start_y2: -1
-lc_end_y1: 10
-lc_end_y2: 1
-lc_step: 0.01
+lc_angle: 15 # degrees
+lc_t_max: 20
+lc_t_step: 0.05
 
 # Sources configuration
 source_size: 0.2

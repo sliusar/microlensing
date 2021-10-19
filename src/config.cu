@@ -37,9 +37,9 @@ Configuration::Configuration(const char* filename) {
     // Light curve
     lc_start_y1 = config["lc_start_y1"].as<float>();
     lc_start_y2 = config["lc_start_y2"].as<float>();
-    lc_end_y1 = config["lc_end_y1"].as<float>();
-    lc_end_y2 = config["lc_end_y2"].as<float>();
-    lc_step = config["lc_step"].as<float>();
+    lc_angle = config["lc_angle"].as<float>();
+    lc_t_max = config["lc_t_max"].as<float>();
+    lc_t_step = config["lc_t_step"].as<float>();
 
     lc_enabled = config["lc_enabled"].as<bool>();
 
@@ -55,7 +55,7 @@ Configuration::Configuration(const char* filename) {
     nRaysLine = (int)ceil(2 * R_rays / dx_rays);
     nRaysSq = nRaysLine * nRaysLine;
 
-    nLCsteps = (int)ceil(sqrt(pow(lc_end_y1 - lc_start_y1, 2) + pow(lc_end_y2 - lc_start_y2, 2))/lc_step);
+    nLCsteps = (int)round(lc_t_max / lc_t_step);
     nTimeSteps = (int)round((t_max + dt) / dt);
 
     image_pixel_y1_size = (image_y1_right - image_y1_left) / image_width;
@@ -86,10 +86,9 @@ void Configuration::display() {
         cout << "--- LC trajectory ---" << endl;
         cout << "  Start y1: " << lc_start_y1 << endl;
         cout << "  Start y2: " << lc_start_y2 << endl;
-        cout << "  End y1: " << lc_end_y1 << endl;
-        cout << "  End y2: " << lc_end_y2 << endl;
-        cout << "  Step: " << lc_step << endl;
-        cout << "  LC steps: " << nLCsteps << endl;    
+        cout << "  Angle: " << lc_angle << endl;
+        cout << "  T: [0, " << lc_t_max << "]" << endl;
+        cout << "  dT: " << lc_t_step << endl;  
         cout << endl;
     }
     

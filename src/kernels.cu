@@ -50,15 +50,19 @@ void populateRays(Ray *rays, int nRays, float R_rays, float dx_rays) {
   }
 }
 
-
+float deg2rad(float deg) {
+  return deg * M_PI / 180.0; 
+}
 
 void createTrajectory(float *lc_trajectory, const Configuration conf) {
     int counter = 0;
-    float l = sqrt(pow(conf.lc_end_y1 - conf.lc_start_y1, 2) + pow(conf.lc_end_y2 - conf.lc_start_y2, 2));
-    float step_y1 = conf.lc_step * (conf.lc_end_y1 - conf.lc_start_y1)/l;
-    float step_y2 = conf.lc_step * (conf.lc_end_y2 - conf.lc_start_y2)/l;
-    for (float y1 = conf.lc_start_y1, y2 = conf.lc_start_y2; (y1 < conf.lc_end_y1 && y2 < conf.lc_end_y2); y1+=step_y1, y2+=step_y2) {
+    float y1_cos = cos(deg2rad(conf.lc_angle));
+    float y2_sin = sin(deg2rad(conf.lc_angle));
+    float y1, y2;
+    for (float t = 0.0; t < conf.lc_t_max; t = t + conf.lc_t_step) {
         if (counter < conf.nLCsteps) {
+          y1 = conf.lc_start_y1 + t * y1_cos;
+          y2 = conf.lc_start_y2 + t * y2_sin;
           lc_trajectory[counter + 0 * conf.nLCsteps] = y1; // Y1 coordinate
           lc_trajectory[counter + 1 * conf.nLCsteps] = y2; // Y2 coordinate
           lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Normalization value

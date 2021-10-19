@@ -20,7 +20,7 @@ class Configuration {
         int nMicrolenses, nRays, nRaysSq, nRaysLine, nLCsteps, nTimeSteps; // Calculated        
         float image_pixel_y1_size, image_pixel_y2_size; // Calculated
         
-        float lc_start_y1, lc_start_y2, lc_end_y1, lc_end_y2, lc_step;
+        float lc_start_y1, lc_start_y2, lc_angle, lc_t_max, lc_t_step;
         bool lc_enabled, output_rays;
 
         float source_size;

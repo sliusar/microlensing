@@ -31,10 +31,10 @@ image_y2_top: 15
 # LC configuration
 lc_enabled: true
 lc_start_y1: -10
-lc_start_y2: -1
-lc_end_y1: 10
-lc_end_y2: 1
-lc_step: 0.01
+lc_start_y2: -10
+lc_angle: 45 # degrees
+lc_t_max: 28
+lc_t_step: 0.05
 
 # Sources configuration
 source_size: 0.2
@@ -42,10 +42,21 @@ source_size: 0.2
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
-# Raytracing time: 6.09938s (mean: 0.609938s)
-# Output time: 0.274152s (mean: 0.0274152s)
-# Total time: 7.84899s
+# Raytracing time: 5.93574s (mean: 0.593574s)
+# Output time: 0.151166s (mean: 0.0151166s)
+# Total time: 7.10098s
 #
-# real    0m7.956s
-# user    0m5.431s
-# sys     0m2.280s
+# real    0m7.324s
+# user    0m4.833s
+# sys     0m2.169s
+
+# rs = 0.03 rE = 1.5 light days (λ = 5430 Å)
+
+# Microlensing of Q2237+0305: Simulations and Statistics
+# rE ≈ 0.06(M/M⊙)**(1/2) pc 
+# relative source velocity 4000 ± 2000 km/s
+# m \in [0.1 M⊙, 1 M⊙] salpeter mass function
+# sigma \in {1, 0.5, 0.25}
+# 40 μ as ≈ 0.32 pc
+
+
