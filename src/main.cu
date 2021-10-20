@@ -11,7 +11,7 @@ using namespace std;
 #define CUDA_BLOCK_SIZE 1024
 #define CUDA_BLOCK_SIZE_2d 32
 
-#define LC_COLUMNS 10
+#define LC_COLUMNS 14
 
 bool debug = false;
 
@@ -99,13 +99,6 @@ int main(const int argc, const char** argv) {
 
   cudaMalloc(&image_buf, image_bytes);
   
-  cout << "Creating microlensing field ... " << flush;
-  StartTimer();
-  randomiseMicrolenses(microlenses, conf);  
-  cudaMalloc(&ul_buf, uls_bytes);
-  cudaMemcpy(ul_buf, microlenses, uls_bytes, cudaMemcpyHostToDevice);
-  cout << GetElapsedTime() << "s" << endl;
-
   cout << "Creating rays field ... " << flush;
   StartTimer();
   cudaMalloc(&rays_buf, rays_bytes);
@@ -141,16 +134,27 @@ int main(const int argc, const char** argv) {
   float t_raytracing = 0;
   float t_output = 0;
   float t_lc = 0;
+  bool microlenses_set = false;
   
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
+    cout << endl << ">>> Iteration #" << ++counter << ", t=" << t << " (elapsed: " << getCurrentTimestamp() - t0 << "s)" << endl;
+
     memset(image, 0, image_bytes);
     cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
 
     resetTrajectory(lc, conf);
     cudaMemcpy(lc_buf, lc, lc_bytes, cudaMemcpyHostToDevice);
-
-    cout << endl << ">>> Iteration #" << ++counter << ", t=" << t << " (elapsed: " << getCurrentTimestamp() - t0 << "s)" << endl;
     
+    if (conf.operation_mode == 1 || (conf.operation_mode == 0 && microlenses_set == false)) {
+      microlenses_set = true;
+      cout << "    Creating microlensing field ... " << flush;
+      StartTimer();
+      randomiseMicrolenses(microlenses, conf);  
+      cudaMalloc(&ul_buf, uls_bytes);
+      cudaMemcpy(ul_buf, microlenses, uls_bytes, cudaMemcpyHostToDevice);
+      cout << GetElapsedTime() << "s" << endl;
+    }
+
     cout << "    [CUDA] Running ray tracing ... " << flush;
     StartTimer();
     deflectRays<<<nBlocksRays, CUDA_BLOCK_SIZE>>>(ul_buf, rays_buf, conf, t, image_buf, lc_buf); // compute ray deflections
@@ -223,13 +227,22 @@ int main(const int argc, const char** argv) {
       cout << "    Writing light curves data to " << filename << " ... " << flush;
       outf.open(filename);
       int c = conf.nLCsteps;
-      for (int i = 0; i < c; i++) {
-        outf << lc[i + 0 * c] << " " << lc[i + 1 * c] << " ";
-        outf << lc[i + 2 * c] << " " << lc[i + 3 * c] << " ";
-        outf << lc[i + 4 * c] << " " << lc[i + 5 * c] << " ";
-        outf << lc[i + 6 * c] << " " << lc[i + 7 * c] << " ";
-        outf << lc[i + 8 * c] << " " << lc[i + 9 * c] << " ";
-        outf << endl;
+ 
+      int counter = 0;
+      outf << "# t y1 y2 ad gauss ld pl el el_orth" << endl;
+      for (float t = 0.0; t < conf.lc_t_max; t = t + conf.lc_t_step) {
+        if (counter < conf.nLCsteps) {
+          outf << t << " ";
+          outf << lc[counter + 0 * c] << " " << lc[counter + 1 * c] << " ";
+          outf << lc[counter + 3 * c] / lc[counter + 2 * c] << " ";
+          outf << lc[counter + 5 * c] / lc[counter + 4 * c] << " ";
+          outf << lc[counter + 7 * c] / lc[counter + 6 * c] << " ";
+          outf << lc[counter + 9 * c] / lc[counter + 8 * c] << " ";
+          outf << lc[counter + 11 * c] / lc[counter + 10 * c] << " ";
+          outf << lc[counter + 13 * c] / lc[counter + 12 * c] << " ";
+          outf << endl;
+        }
+        counter++;
       }
       outf.close();
       _t = GetElapsedTime();

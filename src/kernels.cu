@@ -73,8 +73,12 @@ void createTrajectory(float *lc_trajectory, const Configuration conf) {
           lc_trajectory[counter + 7 * conf.nLCsteps] = 0.0; // Amplitude value
           lc_trajectory[counter + 8 * conf.nLCsteps] = 0.0; // Normalization value
           lc_trajectory[counter + 9 * conf.nLCsteps] = 0.0; // Amplitude value
-          counter++;
+          lc_trajectory[counter + 10 * conf.nLCsteps] = 0.0; // Normalization value
+          lc_trajectory[counter + 11 * conf.nLCsteps] = 0.0; // Amplitude value
+          lc_trajectory[counter + 12 * conf.nLCsteps] = 0.0; // Normalization value
+          lc_trajectory[counter + 13 * conf.nLCsteps] = 0.0; // Amplitude value
         }
+        counter++;
     }
 }
 
@@ -88,13 +92,10 @@ void resetTrajectory(float *lc_trajectory, const Configuration conf) {
     lc_trajectory[counter + 7 * conf.nLCsteps] = 0.0; // Amplitude value
     lc_trajectory[counter + 8 * conf.nLCsteps] = 0.0; // Normalization value
     lc_trajectory[counter + 9 * conf.nLCsteps] = 0.0; // Amplitude value
-  }
-}
-
-void printLC(float *lc, int c) {
-  cout << endl << "Y1\tY2\tNorm\tVal" << endl;
-  for (int i = 0; i < c; i++) {
-    cout << lc[i + 0 * c] << "\t" << lc[i + 1 * c] << "\t" << lc[i + 2 * c] << "\t" << lc[i + 3 * c] << endl;
+    lc_trajectory[counter + 10 * conf.nLCsteps] = 0.0; // Normalization value
+    lc_trajectory[counter + 11 * conf.nLCsteps] = 0.0; // Amplitude value
+    lc_trajectory[counter + 12 * conf.nLCsteps] = 0.0; // Normalization value
+    lc_trajectory[counter + 13 * conf.nLCsteps] = 0.0; // Amplitude value
   }
 }
 
@@ -162,18 +163,27 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
     float r_x1 = w * c.image_pixel_y1_size + c.image_y1_left;
     float r_x2 = h * c.image_pixel_y2_size + c.image_y2_bottom;
   
-    float factorex_gs, factorex_ld, factorex_pl, factorex_ad;
+    float factorex_gs, factorex_ld, factorex_pl, factorex_ad, factorex_el, factorex_el_p;
     for (int i = 0; i < c.nLCsteps; i++) {
       float lc_y1 = lc[i + 0 * c.nLCsteps];
       float lc_y2 = lc[i + 1 * c.nLCsteps];
       float d = dst(lc_y1 - r_x1, lc_y2 - r_x2);
       float d2 = d * d;
+
+      float d_el = dst((lc_y1 - r_x1) / c.a_el, (lc_y2 - r_x2) / c.b_el);
+      float d2_el = d_el * d_el;
+
+      float d_el_p = dst((lc_y1 - r_x1) / c.b_el, (lc_y2 - r_x2) / c.a_el);
+      float d2_el_p = d_el_p * d_el_p;
+
       if (d < 10 * c.R_gs) {
           int pix = image[w * c.image_height + h];
           if (pix > 0) {
             factorex_gs = expf(- d2 / c.R2_gs);
             factorex_ld = ((c.p_ld + 1)/(M_PI * c.R2_ld)) * H(1 - d2/c.R2_ld) * pow(1 - d2/c.R2_ld, c.p_ld);
             factorex_pl = ((c.p_pl - 1)/(M_PI * c.R2_pl)) * (1/pow(1 + d2/c.R2_pl, c.p_pl));
+            factorex_el = expf( - d2_el);
+            factorex_el_p = expf( - d2_el_p);
             if (d > c.R_ad) {
               factorex_ad = (3 * c.R_ad  / (2 * M_PI * pow(d, 3))) * (1 - sqrt(c.R_ad/d));
               atomicAdd(&lc[i + 2 * c.nLCsteps], factorex_ad); // Normalization
@@ -188,6 +198,12 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
 
             atomicAdd(&lc[i + 8 * c.nLCsteps], factorex_pl); // Normalization
             atomicAdd(&lc[i + 9 * c.nLCsteps], pix * factorex_pl); // Amplitude value, non-normalized  
+
+            atomicAdd(&lc[i + 10 * c.nLCsteps], factorex_el); // Normalization
+            atomicAdd(&lc[i + 11 * c.nLCsteps], pix * factorex_el); // Amplitude value, non-normalized  
+
+            atomicAdd(&lc[i + 12 * c.nLCsteps], factorex_el_p); // Normalization
+            atomicAdd(&lc[i + 13 * c.nLCsteps], pix * factorex_el_p); // Amplitude value, non-normalized  
           }
       }
       //factorex = exp(-dist2 / sigsq2);

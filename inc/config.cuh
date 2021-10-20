@@ -8,6 +8,7 @@ class Configuration {
     public:
         bool debug;
 
+        int operation_mode;
         bool save_images;
         int randomise_seed_number;
         float sigma, sigma_c, gamma, R_field, M_max, V_max, R_rays, dx_rays;
@@ -24,7 +25,11 @@ class Configuration {
         bool lc_enabled, output_rays;
 
         float source_size;
-        float R_gs, R2_gs, p_ld, R_1_2_ld, R_ld, R2_ld, p_pl, R_1_2_pl, R_pl, R2_pl, R_1_2_ad, R_ad, R2_ad; // Source-related, calculated
+        float R_gs, R2_gs, R_1_2_ld, R_ld, R2_ld, R_1_2_pl, R_pl, R2_pl, R_1_2_ad, R_ad, R2_ad; // Source-related, calculated
+
+        float e_el, e2_el, a_el, b_el, a2_el, b2_el;
+
+        float eccentricity, p_ld, p_pl;
 
         Configuration(const char *);
         ~Configuration() {};

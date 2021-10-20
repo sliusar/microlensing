@@ -71,7 +71,7 @@ def get_image_data(filename, gamma=0.6, debug=False, hide_max=False, logscale=Fa
 
 def get_lc_data(filename):
     data = np.loadtxt(filename)
-    return pd.DataFrame(data=data.copy(), columns=["y1", "y2", "n_ad", "a_ad",  "n_gs", "a_gs",  "n_ld", "a_ld", "n_pl", "a_pl"])
+    return pd.DataFrame(data=data.copy(), columns=["t", "y1", "y2", "a_ad", "a_gs", "a_ld", "a_pl", "a_el", "a_el_orth"])
 # -
 
 
@@ -143,7 +143,11 @@ lc = get_lc_data(filename2)
 fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
 pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
 ax1.plot(lc['y1'], lc['y2'], color='red')
-pos2 = ax2.plot(lc['y1'], lc['a_gs']/lc['n_gs'], '-')
+pos2 = ax2.plot(lc['t'], lc['a_gs'], '-', color='blue')
+ax2.plot(lc['t'], lc['a_ad'], '-', color='orange')
+ax2.plot(lc['t'], lc['a_pl'], '-', color='green')
+ax2.plot(lc['t'], lc['a_pl'], '-', color='grey')
+ax2.plot(lc['t'], lc['a_el'], '-', color='red', linestyle='dotted')
 #pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
 #pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
 ax1.set_title(filename1)
@@ -151,9 +155,56 @@ ax2.set_title(filename2)
 fig.colorbar(pos1, ax=ax1)
 fig.tight_layout()
 plt.show()
-# -
+# +
+filename1 = "output/reference/image_0.00.dat"
+filename2 = "output/reference/lc_0.00.dat"
+
+img1, extent1 = get_image_data(filename1, logscale=True, debug=True)
+lc = get_lc_data(filename2)
+
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
+pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
+ax1.plot(lc['y1'], lc['y2'], color='red')
+pos2 = ax2.plot(lc['t'], lc['a_gs'], '-', label='gs')
+ax2.plot(lc['t'], lc['a_ad'], '-', label='ad')
+ax2.plot(lc['t'], lc['a_pl'], '-', label='pl')
+ax2.plot(lc['t'], lc['a_ld'], '-', label='ld')
+ax2.plot(lc['t'], lc['a_el'], '-', linestyle='dotted', label='el')
+ax2.plot(lc['t'], lc['a_el'], '-', linestyle='dashed', label='el ⊥')
+ax2.legend()
+#pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
+#pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
+ax1.set_title(filename1)
+ax2.set_title(filename2)
+fig.colorbar(pos1, ax=ax1)
+fig.tight_layout()
+plt.show()
 
 
+# +
+filename1 = "output/reference/image_0.10.dat"
+filename2 = "output/reference/lc_0.10.dat"
+
+img1, extent1 = get_image_data(filename1, logscale=True, debug=True)
+lc = get_lc_data(filename2)
+
+fig, (ax1, ax2) = plt.subplots(figsize=(9,4), ncols=2)
+pos1 = ax1.imshow(img1, interpolation='bessel', extent=extent1, origin='lower')
+ax1.plot(lc['y1'], lc['y2'], color='red')
+pos2 = ax2.plot(lc['t'], lc['a_gs'], '-', label='gs')
+ax2.plot(lc['t'], lc['a_ad'], '-', label='ad')
+ax2.plot(lc['t'], lc['a_pl'], '-', label='pl')
+ax2.plot(lc['t'], lc['a_ld'], '-', label='ld')
+ax2.plot(lc['t'], lc['a_el'], '-', linestyle='dotted', label='el')
+ax2.plot(lc['t'], lc['a_el'], '-', linestyle='dashed', label='el ⊥')
+ax2.legend()
+#pos2 = ax2.plot(lc['y1'], lc['norm'], '-')
+#pos2 = ax2.plot(lc['y1'], lc['ampl'], '-')
+ax1.set_title(filename1)
+ax2.set_title(filename2)
+fig.colorbar(pos1, ax=ax1)
+fig.tight_layout()
+plt.show()
 
 # +
 filename1 = "output/test1234567890/lc_0.00.dat"
@@ -322,35 +373,151 @@ colors = {
     'ad' : 'blue',
     'gs' : 'orange',
     'ld' : 'green',
-    'pl' : 'red'
+    'pl' : 'red',
+    'el' : 'orange',
+    'el_orth' : 'grey',
+}
+
+lines = {
+    'ad' : None,
+    'gs' : None,
+    'ld' : None,
+    'pl' : None,
+    'el' : 'dashed',
+    'el_orth' : 'dotted',  
 }
 
 fig, (ax_orig, ax_corr) = plt.subplots(2, 1, figsize=(9, 5))
 
-for t in np.arange(0, 2, 0.1):
-    filename2 = "output/test1234567890/lc_%.2f.dat" % t
+lags = None
+ay = {}
+
+for t in np.arange(0, 50, 0.1):
+    filename2 = "output/e0.5/lc_%.2f.dat" % t
     img, extent = get_image_data(filename1, logscale=True)
     lc = get_lc_data(filename2)
-
-    for i in ['ad', 'gs', 'ld', 'pl']:
-        sig1 = lc['a_%s' % i]/lc['n_%s' % i]
-        sig2 = lc['a_%s' % i]/lc['n_%s' % i]
+    
+    for i in ['el', 'el_orth']:
+        sig1 = lc['a_%s' % i]
+        sig2 = lc['a_%s' % i]
 
         corr = signal.correlate(sig1, sig2)
         lags = signal.correlation_lags(len(sig1), len(sig2))
         corr /= np.max(corr)
+        if i not in ay:
+            ay[i] = []
+        ay[i].append(corr)    
+        
+        #ax_orig.plot(sig1, color=colors[i])
+        #ax_orig.set_title('LCs')
 
-        ax_orig.plot(sig1, color=colors[i])
-        ax_orig.set_title('LC')
+        #ax_corr.plot(lags, corr, color=colors[i], linestyle=lines[i])
+        #ax_corr.set_title('Autocorrelation')
+        #ax_corr.set_xlabel('Lag')
+        #ax_corr.set_xlim([0, None])
 
-        ax_corr.plot(lags, corr, color=colors[i])
-        ax_corr.set_title('Autocorrelation')
-        ax_corr.set_xlabel('Lag')
-        ax_corr.set_xlim([0, None])
+ax_corr.errorbar(lags[::10], y=np.mean(ay['el'], axis=0)[::10], yerr=np.std(ay['el'], axis=0)[::10], color=colors['el'], linestyle=lines['el'])
+ax_corr.errorbar(lags[::10], y=np.mean(ay['el_orth'], axis=0)[::10], yerr=np.std(ay['el_orth'], axis=0)[::10], color=colors['el_orth'], linestyle=lines['el_orth'])
+ax_corr.set_title('Autocorrelation')
+ax_corr.set_xlabel('Lag')
+ax_corr.set_xlim([0, None])        
+        
 fig.tight_layout()
 plt.show()
+
+
+
 # -
 
+
+def cross_corr(t, y1, y2):
+    y1_auto_corr = np.dot(y1, y1) / len(y1)
+    y2_auto_corr = np.dot(y2, y2) / len(y1)
+    #corr = np.correlate(y1, y2, mode='same')
+    #unbiased_sample_size = np.correlate(np.ones(len(y1)), np.ones(len(y1)), mode='same')
+    corr = signal.correlate(y1, y2)
+    unbiased_sample_size = signal.correlate(np.ones(len(y1)), np.ones(len(y1)))
+    corr = corr / unbiased_sample_size / np.sqrt(y1_auto_corr * y2_auto_corr)
+    res = corr[(len(corr) // 2) : len(corr)]
+    return res, t.to_numpy()[:len(res)]
+
+
+from matplotlib.pyplot import cm
+colors = iter(cm.rainbow(np.linspace(0, 1, 400)))
+
+
+
+# +
+from scipy import signal
+import matplotlib.colors as mcolors
+
+fig, ax_corr = plt.subplots(1, 1, figsize=(9, 5))
+
+lags = None
+lags1 = None
+
+colors = [
+    "green",
+    "blue",
+    "black",
+    "red",
+    "grey",
+    "orange",
+    "purple"
+]
+
+index = 0
+for e in ['0.1', '0.2', '0.3', '0.4', '0.5']:
+    a1 = []
+    a2 = []
+    
+    a3 = []
+    a4 = []
+    for t in np.arange(0, 50, 0.1):
+        filename2 = "output/e%s/lc_%.2f.dat" % (e, t)
+        lc = get_lc_data(filename2)
+
+        tc = lc['t']
+        sig1 = lc['a_el']
+        sig2 = lc['a_el_orth']
+
+        corr1, lags = cross_corr(tc, sig1, sig1)
+        corr2, lags = cross_corr(tc, sig2, sig2)
+        
+        a1.append(corr1)
+        a2.append(corr2)
+
+        c1 = signal.correlate(sig1, sig1)
+        c2 = signal.correlate(sig2, sig2)
+        c1 /= np.max(c1)
+        c2 /= np.max(c2)
+        
+        lags1 = signal.correlation_lags(len(sig1), len(sig2)) * (tc[1] - tc[0])
+        a3.append(c1)
+        a4.append(c2)
+    
+    c = colors[index]
+    
+    #ax_corr.errorbar(lags[::10], y=np.mean(a1, axis=0)[::10], yerr=0*np.std(a1, axis=0)[::10], c=c, label=e)
+    #ax_corr.errorbar(lags[::10], y=np.mean(a2, axis=0)[::10], yerr=0*np.std(a2, axis=0)[::10], c=c, linestyle='dashed')
+
+    ax_corr.errorbar(lags1[::10], y=np.mean(a3, axis=0)[::10], yerr=np.std(a3, axis=0)[::10], c=c, label='$\epsilon = %s$' % e)
+    ax_corr.errorbar(lags1[::10], y=np.mean(a4, axis=0)[::10], yerr=np.std(a4, axis=0)[::10], c=c, linestyle='dotted')
+
+    index+=1
+ax_corr.set_title('Autocorrelations')
+ax_corr.set_xlabel('Lag')
+ax_corr.set_ylabel('ACF')
+ax_corr.set_xlim([0, max(lags)])        
+ax_corr.legend()
+fig.tight_layout()
+plt.show()
+
+
+
+# -
+
+# !pwd
 
 
 

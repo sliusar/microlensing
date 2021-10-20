@@ -30,6 +30,8 @@ Configuration::Configuration(const char* filename) {
 
     save_images = config["save_images"].as<bool>();
 
+    operation_mode = config["operation_mode"].as<int>();
+
     randomise_seed_number = config["randomise_seed_number"].as<int>();
 
     configuration_id = config["configuration_id"].as<string>();
@@ -46,6 +48,10 @@ Configuration::Configuration(const char* filename) {
     output_rays = config["output_rays"].as<bool>();
 
     source_size = config["source_size"].as<float>();
+
+    eccentricity = config["eccentricity"].as<float>();
+    p_ld = config["p_ld"].as<float>();
+    p_pl = config["p_pl"].as<float>();
 
     // Recalculated values
     nMicrolenses = sigma * R_field * R_field / M_max;
@@ -103,15 +109,18 @@ void Configuration::display() {
 
     cout << "--- Sources ---" << endl;
     cout << "source_size: " << source_size << endl;
-    cout << "R_gs: " << R_gs << endl;
+    cout << "eccentricity: " << eccentricity << endl;
     cout << "p_ld: " << p_ld << endl;
+    cout << "p_pl: " << p_pl << endl;
+
+    cout << "R_gs: " << R_gs << endl;
     cout << "R_1_2_ld: " << R_1_2_ld << endl;
     cout << "R_ld: " << R_ld << endl;
-    cout << "p_pl: " << p_pl << endl;
     cout << "R_1_2_pl: " << R_1_2_pl << endl;
     cout << "R_pl: " << R_pl << endl;
     cout << "R_1_2_ad: " << R_1_2_ad << endl;
     cout << "R_ad: " << R_ad << endl;
+    cout << "a_el, b_el: " << a_el << ", " << b_el << endl;
     cout << endl;
 }
 
@@ -133,4 +142,11 @@ void Configuration::prepare_sources() {
     R_1_2_ad = source_size * sqrt(log(2.0));
     R_ad = R_1_2_ad/4.0;
     R2_ad = R_ad * R_ad;
+
+    e2_el = eccentricity * eccentricity;
+    a_el = source_size / (1 - e2_el);
+    b_el = source_size * (1 - e2_el);
+
+    a2_el = a_el * a_el;
+    b2_el = b_el * b_el;
 }
