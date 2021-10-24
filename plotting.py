@@ -474,7 +474,7 @@ for e in ['0.1', '0.2', '0.3', '0.4', '0.5']:
     a3 = []
     a4 = []
     for t in np.arange(0, 50, 0.1):
-        filename2 = "output/e%s/lc_%.2f.dat" % (e, t)
+        filename2 = "output/e%s_r0.5/lc_%.2f.dat" % (e, t)
         lc = get_lc_data(filename2)
 
         tc = lc['t']
@@ -505,7 +505,76 @@ for e in ['0.1', '0.2', '0.3', '0.4', '0.5']:
     ax_corr.errorbar(lags1[::10], y=np.mean(a4, axis=0)[::10], yerr=np.std(a4, axis=0)[::10], c=c, linestyle='dotted')
 
     index+=1
-ax_corr.set_title('Autocorrelations')
+ax_corr.set_title('Autocorrelations (R=0.5, N=500)')
+ax_corr.set_xlabel('Lag')
+ax_corr.set_ylabel('ACF')
+ax_corr.set_xlim([0, max(lags)])        
+ax_corr.legend()
+fig.tight_layout()
+plt.show()
+
+
+
+
+# +
+from scipy import signal
+import matplotlib.colors as mcolors
+
+fig, ax_corr = plt.subplots(1, 1, figsize=(9, 5))
+
+lags = None
+lags1 = None
+
+colors = [
+    "green",
+    "blue",
+    "black",
+    "red",
+    "grey",
+    "orange",
+    "purple"
+]
+
+index = 0
+for e in ['0.1', '0.2', '0.3', '0.4', '0.5']:
+    a1 = []
+    a2 = []
+    
+    a3 = []
+    a4 = []
+    for t in np.arange(0, 50, 0.1):
+        filename2 = "output/e%s_r0.2/lc_%.2f.dat" % (e, t)
+        lc = get_lc_data(filename2)
+
+        tc = lc['t']
+        sig1 = lc['a_el']
+        sig2 = lc['a_el_orth']
+
+        corr1, lags = cross_corr(tc, sig1, sig1)
+        corr2, lags = cross_corr(tc, sig2, sig2)
+        
+        a1.append(corr1)
+        a2.append(corr2)
+
+        c1 = signal.correlate(sig1, sig1)
+        c2 = signal.correlate(sig2, sig2)
+        c1 /= np.max(c1)
+        c2 /= np.max(c2)
+        
+        lags1 = signal.correlation_lags(len(sig1), len(sig2)) * (tc[1] - tc[0])
+        a3.append(c1)
+        a4.append(c2)
+    
+    c = colors[index]
+    
+    #ax_corr.errorbar(lags[::10], y=np.mean(a1, axis=0)[::10], yerr=0*np.std(a1, axis=0)[::10], c=c, label=e)
+    #ax_corr.errorbar(lags[::10], y=np.mean(a2, axis=0)[::10], yerr=0*np.std(a2, axis=0)[::10], c=c, linestyle='dashed')
+
+    ax_corr.errorbar(lags1[::10], y=np.mean(a3, axis=0)[::10], yerr=np.std(a3, axis=0)[::10], c=c, label='$\epsilon = %s$' % e)
+    ax_corr.errorbar(lags1[::10], y=np.mean(a4, axis=0)[::10], yerr=np.std(a4, axis=0)[::10], c=c, linestyle='dotted')
+
+    index+=1
+ax_corr.set_title('Autocorrelations (R=0.2, N=500)')
 ax_corr.set_xlabel('Lag')
 ax_corr.set_ylabel('ACF')
 ax_corr.set_xlim([0, max(lags)])        
@@ -516,8 +585,6 @@ plt.show()
 
 
 # -
-
-# !pwd
 
 
 

@@ -17,7 +17,7 @@ dt: 0.1 # time step
 t_max: 1 # time will be in the range [0, t_max) with a step dt
 
 # Rays configuration
-R_rays: 100
+R_rays: 200
 dx_rays: 0.05
 
 # Output image definitions
@@ -46,13 +46,13 @@ p_pl: 1.5
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
-# Raytracing time: 5.93574s (mean: 0.593574s)
-# Output time: 0.151166s (mean: 0.0151166s)
-# Total time: 7.10098s
-#
-# real    0m7.324s
-# user    0m4.833s
-# sys     0m2.169s
+# Raytracing time: 23.4962s (mean: 2.34962s)
+# Output time: 0.132267s (mean: 0.0132267s)
+# Total time: 26.4289s
+# 
+# real    0m26.559s
+# user    0m18.524s
+# sys     0m7.729s
 
 # rs = 0.03 rE = 1.5 light days (λ = 5430 Å)
 
