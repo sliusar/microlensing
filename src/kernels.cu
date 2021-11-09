@@ -154,6 +154,14 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
       float d = dst(lc_y1 - r_x1, lc_y2 - r_x2);
       float d2 = d * d;
 
+      
+      
+
+
+
+
+
+
       float d_el = dst((lc_y1 - r_x1) / c.a_el, (lc_y2 - r_x2) / c.b_el);
       float d2_el = d_el * d_el;
 
@@ -172,7 +180,7 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
               factorex_ad = (3 * c.R_ad  / (2 * M_PI * pow(d, 3))) * (1 - sqrt(c.R_ad/d));
               atomicAdd(&lc[i + 2 * c.nLCsteps], factorex_ad); // Normalization
               atomicAdd(&lc[i + 3 * c.nLCsteps], pix * factorex_ad); // Amplitude value, non-normalized  
-            }     
+            }
             atomicAdd(&lc[i + 4 * c.nLCsteps], factorex_gs); // Normalization
             atomicAdd(&lc[i + 5 * c.nLCsteps], pix * factorex_gs); // Amplitude value, non-normalized  
 
