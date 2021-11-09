@@ -32,10 +32,10 @@ image_y2_top: 15
 # LC configuration
 lc_enabled: true
 lc_start_y1: -10
-lc_start_y2: -10
+lc_start_y2: -5
 lc_angle: 1 # degrees
-lc_t_max: 20
-lc_t_step: 0.05
+lc_dist_max: 20
+lc_dist_step: 0.05
 
 # Sources configuration
 source_size: 0.2

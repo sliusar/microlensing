@@ -40,16 +40,19 @@ Configuration::Configuration(const char* filename) {
     lc_start_y1 = config["lc_start_y1"].as<float>();
     lc_start_y2 = config["lc_start_y2"].as<float>();
     lc_angle = config["lc_angle"].as<float>();
-    lc_t_max = config["lc_t_max"].as<float>();
-    lc_t_step = config["lc_t_step"].as<float>();
+    lc_dist_max = config["lc_dist_max"].as<float>();
+    lc_dist_step = config["lc_dist_step"].as<float>();
 
     lc_enabled = config["lc_enabled"].as<bool>();
 
     output_rays = config["output_rays"].as<bool>();
 
-    source_size = config["source_size"].as<float>();
+    std::vector<float> s = config["source_size"].as<std::vector<float>>();
+    std::vector<float> e = config["eccentricity"].as<std::vector<float>>();
+    
+    std::copy(s.begin(), s.end(), source_size);
+    std::copy(e.begin(), e.end(), eccentricity);
 
-    eccentricity = config["eccentricity"].as<float>();
     p_ld = config["p_ld"].as<float>();
     p_pl = config["p_pl"].as<float>();
 
@@ -61,7 +64,9 @@ Configuration::Configuration(const char* filename) {
     nRaysLine = (int)ceil(2 * R_rays / dx_rays);
     nRaysSq = nRaysLine * nRaysLine;
 
-    nLCsteps = (int)round(lc_t_max / lc_t_step);
+    nLCsteps = (int)round(lc_dist_max / lc_dist_step);
+    //nLCcolumns = 2 * ((int)round((source_size[1] - source_size[0])/source_size[2]) * (int)round((eccentricity[1] - eccentricity[0])/eccentricity[2])) + 2;
+    nLCcolumns = 2 + 2 * (1 /*ad*/ + 1 /*gs*/ + 1 /*ld*/ + 1 /*pl*/ + 1 /*el*/ + 1 /*el_orth*/);
     nTimeSteps = (int)round((t_max + dt) / dt);
 
     image_pixel_y1_size = (image_y1_right - image_y1_left) / image_width;
@@ -93,8 +98,8 @@ void Configuration::display() {
         cout << "  Start y1: " << lc_start_y1 << endl;
         cout << "  Start y2: " << lc_start_y2 << endl;
         cout << "  Angle: " << lc_angle << endl;
-        cout << "  T: [0, " << lc_t_max << "]" << endl;
-        cout << "  dT: " << lc_t_step << endl;  
+        cout << "  T: [0, " << lc_dist_max << "]" << endl;
+        cout << "  dT: " << lc_dist_step << endl;  
         cout << endl;
     }
     
@@ -108,44 +113,39 @@ void Configuration::display() {
     cout << endl;
 
     cout << "--- Sources ---" << endl;
-    cout << "source_size: " << source_size << endl;
-    cout << "eccentricity: " << eccentricity << endl;
+    cout << "source_size: [" << source_size[0] << ", " << source_size[1] << "], step = " << source_size[2] << endl;
+    cout << "eccentricity: [" << eccentricity[0] << ", " << eccentricity[1] << "], step = " << eccentricity[2] << endl;
     cout << "p_ld: " << p_ld << endl;
     cout << "p_pl: " << p_pl << endl;
 
-    cout << "R_gs: " << R_gs << endl;
-    cout << "R_1_2_ld: " << R_1_2_ld << endl;
-    cout << "R_ld: " << R_ld << endl;
-    cout << "R_1_2_pl: " << R_1_2_pl << endl;
-    cout << "R_pl: " << R_pl << endl;
-    cout << "R_1_2_ad: " << R_1_2_ad << endl;
-    cout << "R_ad: " << R_ad << endl;
-    cout << "a_el, b_el: " << a_el << ", " << b_el << endl;
     cout << endl;
 }
 
 void Configuration::prepare_sources() {
+    
+    float src_size = source_size[0];
+    float ecc = eccentricity[0];
 
-    R_gs = source_size;
+    R_gs = src_size;
     R2_gs = R_gs * R_gs;
 
     p_ld = 2.0;
-    R_1_2_ld = source_size * sqrt(log(2.0));
+    R_1_2_ld = src_size * sqrt(log(2.0));
     R_ld = R_1_2_ld / sqrt(1.0 - pow(0.5, 2)/(p_ld + 2));
     R2_ld = R_ld * R_ld;
 
     p_pl = 3.0/2.0;
-    R_1_2_pl = source_size * sqrt(log(2.0));
+    R_1_2_pl = src_size * sqrt(log(2.0));
     R_pl = R_1_2_pl / sqrt((pow(2.0, 1.0/(p_pl - 1)) - 1.0)/log(2.0));
     R2_pl = R_pl * R_pl;
 
-    R_1_2_ad = source_size * sqrt(log(2.0));
+    R_1_2_ad = src_size * sqrt(log(2.0));
     R_ad = R_1_2_ad/4.0;
     R2_ad = R_ad * R_ad;
 
-    e2_el = eccentricity * eccentricity;
-    a_el = source_size / (1 - e2_el);
-    b_el = source_size * (1 - e2_el);
+    e2_el = ecc * ecc;
+    a_el = src_size / (1 - e2_el);
+    b_el = src_size * (1 - e2_el);
 
     a2_el = a_el * a_el;
     b2_el = b_el * b_el;

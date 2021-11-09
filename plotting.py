@@ -222,8 +222,6 @@ if False:
 
 
 
-
-
 if False:
     from scipy import signal
     import matplotlib.colors as mcolors
@@ -286,8 +284,6 @@ if False:
     autoscale_y(ax_corr)
     fig.tight_layout()
     plt.show()
-
-
 # +
 from scipy import signal
 
@@ -299,7 +295,7 @@ iterations = np.arange(0, 100, 0.1)
 
 
 for e in ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']:
-    for r in ['0.2', '0.5']:
+    for r in ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7']:
         print("e=%s r=%s t=%.2f" % (e, r, 0))
         c0s = []
         c1s = []
@@ -366,7 +362,7 @@ for e in ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']:
             mask = np.logical_and(lags >= 0, lags <= np.max(tc)/2)
             header = '# lag acf_ad acf_gauss acf_ld acf_pl acf_el acf_el_orth'
             np.savetxt(filename_acf, np.column_stack([lags, c0, c1, c2, c3, c4, c5])[mask], fmt=['%f', '%f', '%f', '%f', '%f', '%f', '%f'], header=header)
-        fig, ax_corr = plt.subplots(1, 1, figsize=(9, 5))
+        fig, ax_corr = plt.subplots(1, 1, figsize=(12, 6))
         ax_corr.errorbar(lags[::step], y=np.mean(c0s, axis=0)[::step], yerr=np.std(c0s, axis=0)[::step]/np.sqrt(len(c0s)), c=colors[0], label='AD')
         ax_corr.errorbar(lags[::step], y=np.mean(c1s, axis=0)[::step], yerr=np.std(c1s, axis=0)[::step]/np.sqrt(len(c1s)), c=colors[1], label='GS')
         ax_corr.errorbar(lags[::step], y=np.mean(c2s, axis=0)[::step], yerr=np.std(c2s, axis=0)[::step]/np.sqrt(len(c2s)), c=colors[2], label='LD')
@@ -374,16 +370,20 @@ for e in ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']:
         ax_corr.errorbar(lags[::step], y=np.mean(c4s, axis=0)[::step], yerr=np.std(c4s, axis=0)[::step]/np.sqrt(len(c4s)), c=colors[4], label='EL $\epsilon = %s$' % e)
         ax_corr.errorbar(lags[::step], y=np.mean(c5s, axis=0)[::step], yerr=np.std(c5s, axis=0)[::step]/np.sqrt(len(c5s)), c=colors[5], label='EL ⊥ $\epsilon = %s$' % e)
         ax_corr.set_title('$R=%sR_E$, $N=%s$' % (r, len(iterations)))
-        ax_corr.set_xlabel('Lag ($R_E$)')
-        ax_corr.set_ylabel('$ACF(K(t))$')
+        ax_corr.set_xlabel('$\delta t$ lag ($R_E$)')
+        ax_corr.set_ylabel('$ACF(K(t) - \overline{K}, \delta t)$')
         ax_corr.set_xlim([0, 5])
         ax_corr.autoscale_view()
         ax_corr.legend()
         autoscale_y(ax_corr)
         fig.tight_layout()
+        plt.savefig('images/acf_eliptic_r%s_e%s.eps' % (r, e))
         plt.savefig('images/acf_eliptic_r%s_e%s.png' % (r, e))
         plt.show()
+        break
+    break
 # -
+
 
 
 
@@ -485,5 +485,108 @@ plt.close()
 
 
 
+
+# +
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+    
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 12), gridspec_kw={'height_ratios': [10, 2, 2]})
+fig.tight_layout()
+fig.subplots_adjust(left=0.09, top=0.98)
+
+iterations = np.arange(0, 1, 0.1)
+directory='reference'
+
+ims = []
+max_ampl = []
+s_max = 0
+for t in iterations:
+    if 10 * t % 10 == 0:
+        print("t=%.2f" % t)
+    filename1 = "output/%s/image_%.2f.dat" % (directory, t)
+    filename2 = "output/%s/lc_%.2f.dat" % (directory, t)
+    img, extent = get_image_data(filename1, logscale=True)
+    lc = get_lc_data(filename2)
+    title = ax1.text(0.5, 1.01, "t=%.2f" % t, ha="center",va="bottom", transform=ax1.transAxes, fontsize="large")
+    line1 = ax1.imshow(img, interpolation='none', extent=extent, origin='lower')
+    ax1.plot(lc['y1'], lc['y2'], color='red')
+    
+    line2, = ax2.plot(lc['y1'], lc['a_el'],      '-', color=colors[0], label='EL' if t == 0 else None)
+    line3, = ax2.plot(lc['y1'], lc['a_el_orth'], '-', color=colors[1], label='EL ⊥' if t == 0 else None)
+    line4, = ax2.plot(lc['y1'], lc['a_gs'],      linestyle='dotted', color=colors[2], label='Gauss' if t == 0 else None)
+    
+    line5, = ax3.plot(lc['y1'], lc['a_ad'],     '-', color=colors[0], label='AD' if t == 0 else None)
+    line6, = ax3.plot(lc['y1'], lc['a_ld'],     '-', color=colors[1], label='LD' if t == 0 else None)
+    line7, = ax3.plot(lc['y1'], lc['a_pl'],     '-', color=colors[2], label='PL' if t == 0 else None)
+    
+    _m = max([max(lc[i]) for i in ['a_ad', 'a_gs', 'a_ld', 'a_pl', 'a_el', 'a_el_orth']])
+    s_max = _m if _m > s_max else s_max
+    
+    ims.append([line1, line2, line3, line4, line5, line6, line7, title])
+
+ax2.legend(loc='upper right')
+ax3.legend(loc='upper right')
+#for l in ims:
+#    _l1, _l3, _l6, _l7, _t = l
+#    #_l1, _l2, _l3, _l4, _l5, _l6, _l7, _t = l
+#    #_l2.axes.set_ylim([0, 1.05 * s_max])
+
+ani = animation.ArtistAnimation(fig, ims, interval=200, blit=True, repeat=False)
+ani.save('images/dynamic_images_all.mp4')
+plt.show()
+plt.close()
+
+# +
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+    
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 12), gridspec_kw={'height_ratios': [10, 2, 2]})
+fig.tight_layout()
+fig.subplots_adjust(left=0.09, top=0.98)
+
+iterations = np.arange(0, 1, 0.1)
+directory='reference'
+
+ims = []
+max_ampl = []
+s_max = 0
+for t in iterations:
+    if 10 * t % 10 == 0:
+        print("t=%.2f" % t)
+    filename1 = "output/%s/image_%.2f.dat" % (directory, t)
+    filename2 = "output/%s/lc_%.2f.dat" % (directory, t)
+    img, extent = get_image_data(filename1, logscale=True)
+    lc = get_lc_data(filename2)
+    title = ax1.text(0.5, 1.01, "t=%.2f" % t, ha="center",va="bottom", transform=ax1.transAxes, fontsize="large")
+    line1 = ax1.imshow(img, interpolation='none', extent=extent, origin='lower')
+    ax1.plot(lc['y1'], lc['y2'], color='red')
+    
+    line2, = ax2.plot(lc['y1'], lc['a_el'],      '-', color=colors[0], label='EL' if t == 0 else None)
+    line3, = ax2.plot(lc['y1'], lc['a_el_orth'], '-', color=colors[1], label='EL ⊥' if t == 0 else None)
+    line4, = ax2.plot(lc['y1'], lc['a_gs'],      linestyle='dotted', color=colors[2], label='Gauss' if t == 0 else None)
+    
+    line5, = ax3.plot(lc['y1'], lc['a_ad'],     '-', color=colors[0], label='AD' if t == 0 else None)
+    line6, = ax3.plot(lc['y1'], lc['a_ld'],     '-', color=colors[1], label='LD' if t == 0 else None)
+    line7, = ax3.plot(lc['y1'], lc['a_pl'],     '-', color=colors[2], label='PL' if t == 0 else None)
+    
+    _m = max([max(lc[i]) for i in ['a_ad', 'a_gs', 'a_ld', 'a_pl', 'a_el', 'a_el_orth']])
+    s_max = _m if _m > s_max else s_max
+    
+    ims.append([line1, line2, line3, line4, line5, line6, line7, title])
+
+ax2.legend(loc='upper right')
+ax3.legend(loc='upper right')
+#for l in ims:
+#    _l1, _l3, _l6, _l7, _t = l
+#    #_l1, _l2, _l3, _l4, _l5, _l6, _l7, _t = l
+#    #_l2.axes.set_ylim([0, 1.05 * s_max])
+
+ani = animation.ArtistAnimation(fig, ims, interval=200, blit=True, repeat=False)
+ani.save('images/dynamic_images_all.mp4')
+plt.show()
+plt.close()
+# -
 
 

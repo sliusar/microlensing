@@ -32,24 +32,24 @@ image_y2_top: 15
 # LC configuration
 lc_enabled: true
 lc_start_y1: -10
-lc_start_y2: -10
+lc_start_y2: -5
 lc_angle: 5 # degrees
-lc_t_max: 20
-lc_t_step: 0.05
+lc_dist_max: 20
+lc_dist_step: 0.05
 
 # Sources configuration
-source_size: 0.2
-eccentricity: 0.2
+source_size: [0.2, 0.7, 0.1] # start, stop, step
+eccentricity: [0.2, 0.9, 0.1] # start, stop, step
 p_ld: 2.0
 p_pl: 1.5
 
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
-# Raytracing time: 23.4962s (mean: 2.34962s)
-# Output time: 0.132267s (mean: 0.0132267s)
-# Total time: 26.4289s
-# 
+# Raytracing time: 23.8614s (mean: 2.38614s)
+# Output time: 0.031508s (mean: 0.0031508s)
+# Total time: 26.2522s
+#
 # real    0m26.559s
 # user    0m18.524s
 # sys     0m7.729s

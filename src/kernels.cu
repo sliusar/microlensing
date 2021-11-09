@@ -54,48 +54,32 @@ float deg2rad(float deg) {
   return deg * M_PI / 180.0; 
 }
 
-void createTrajectory(float *lc_trajectory, const Configuration conf) {
+void createLC(float *lc_trajectory, const Configuration conf) {
     int counter = 0;
     float y1_cos = cos(deg2rad(conf.lc_angle));
     float y2_sin = sin(deg2rad(conf.lc_angle));
     float y1, y2;
-    for (float t = 0.0; t < conf.lc_t_max; t = t + conf.lc_t_step) {
+    for (float t = 0.0; t < conf.lc_dist_max; t = t + conf.lc_dist_step) {
         if (counter < conf.nLCsteps) {
           y1 = conf.lc_start_y1 + t * y1_cos;
           y2 = conf.lc_start_y2 + t * y2_sin;
           lc_trajectory[counter + 0 * conf.nLCsteps] = y1; // Y1 coordinate
           lc_trajectory[counter + 1 * conf.nLCsteps] = y2; // Y2 coordinate
-          lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Normalization value
-          lc_trajectory[counter + 3 * conf.nLCsteps] = 0.0; // Amplitude value
-          lc_trajectory[counter + 4 * conf.nLCsteps] = 0.0; // Normalization value
-          lc_trajectory[counter + 5 * conf.nLCsteps] = 0.0; // Amplitude value
-          lc_trajectory[counter + 6 * conf.nLCsteps] = 0.0; // Normalization value
-          lc_trajectory[counter + 7 * conf.nLCsteps] = 0.0; // Amplitude value
-          lc_trajectory[counter + 8 * conf.nLCsteps] = 0.0; // Normalization value
-          lc_trajectory[counter + 9 * conf.nLCsteps] = 0.0; // Amplitude value
-          lc_trajectory[counter + 10 * conf.nLCsteps] = 0.0; // Normalization value
-          lc_trajectory[counter + 11 * conf.nLCsteps] = 0.0; // Amplitude value
-          lc_trajectory[counter + 12 * conf.nLCsteps] = 0.0; // Normalization value
-          lc_trajectory[counter + 13 * conf.nLCsteps] = 0.0; // Amplitude value
+          for (int i = 2; i < conf.nLCcolumns; i += 2) {
+            lc_trajectory[counter +      i  * conf.nLCsteps] = 0.0; // Amplitude value
+            lc_trajectory[counter + (1 + i) * conf.nLCsteps] = 0.0; // Normalization value
+          }
         }
         counter++;
     }
 }
 
-void resetTrajectory(float *lc_trajectory, const Configuration conf) {
+void resetLC(float *lc_trajectory, const Configuration conf) {
   for (int counter = 0; counter < conf.nLCsteps; counter++) {
-    lc_trajectory[counter + 2 * conf.nLCsteps] = 0.0; // Normalization value
-    lc_trajectory[counter + 3 * conf.nLCsteps] = 0.0; // Amplitude value
-    lc_trajectory[counter + 4 * conf.nLCsteps] = 0.0; // Normalization value
-    lc_trajectory[counter + 5 * conf.nLCsteps] = 0.0; // Amplitude value
-    lc_trajectory[counter + 6 * conf.nLCsteps] = 0.0; // Normalization value
-    lc_trajectory[counter + 7 * conf.nLCsteps] = 0.0; // Amplitude value
-    lc_trajectory[counter + 8 * conf.nLCsteps] = 0.0; // Normalization value
-    lc_trajectory[counter + 9 * conf.nLCsteps] = 0.0; // Amplitude value
-    lc_trajectory[counter + 10 * conf.nLCsteps] = 0.0; // Normalization value
-    lc_trajectory[counter + 11 * conf.nLCsteps] = 0.0; // Amplitude value
-    lc_trajectory[counter + 12 * conf.nLCsteps] = 0.0; // Normalization value
-    lc_trajectory[counter + 13 * conf.nLCsteps] = 0.0; // Amplitude value
+    for (int i = 2; i < conf.nLCcolumns; i += 2) {
+      lc_trajectory[counter +      i  * conf.nLCsteps] = 0.0; // Amplitude value
+      lc_trajectory[counter + (1 + i) * conf.nLCsteps] = 0.0; // Normalization value
+    }
   }
 }
 

@@ -11,8 +11,6 @@ using namespace std;
 #define CUDA_BLOCK_SIZE 1024
 #define CUDA_BLOCK_SIZE_2d 32
 
-#define LC_COLUMNS 14
-
 bool debug = false;
 
 int write_image(char* filename, int* image, Configuration c) {
@@ -75,7 +73,7 @@ int main(const int argc, const char** argv) {
   int uls_bytes = conf.nMicrolenses * sizeof(Microlens);
   int rays_bytes = conf.nRays * sizeof(Ray);
   int image_bytes = conf.image_height * conf.image_width * sizeof(int);
-  int lc_bytes = LC_COLUMNS * conf.nLCsteps * sizeof(float);
+  int lc_bytes = conf.nLCcolumns * conf.nLCsteps * sizeof(float);
 
   Microlens *microlenses = (Microlens*)malloc(uls_bytes);
   Ray *rays = (Ray*)malloc(rays_bytes);
@@ -109,7 +107,7 @@ int main(const int argc, const char** argv) {
   if (conf.lc_enabled) {
     cout << "Creating light curve placeholder ... " << flush;
     StartTimer();
-    createTrajectory(lc, conf);
+    createLC(lc, conf);
     cudaMalloc(&lc_buf, lc_bytes);
     cudaMemcpy(lc_buf, lc, lc_bytes, cudaMemcpyHostToDevice);
     cout << GetElapsedTime() << "s" << endl;
@@ -142,7 +140,7 @@ int main(const int argc, const char** argv) {
     memset(image, 0, image_bytes);
     cudaMemcpy(image_buf, image, image_bytes, cudaMemcpyHostToDevice);
 
-    resetTrajectory(lc, conf);
+    resetLC(lc, conf);
     cudaMemcpy(lc_buf, lc, lc_bytes, cudaMemcpyHostToDevice);
     
     if (conf.operation_mode == 1 || (conf.operation_mode == 0 && microlenses_set == false)) {
@@ -230,7 +228,7 @@ int main(const int argc, const char** argv) {
  
       int counter = 0;
       outf << "# t y1 y2 ad gauss ld pl el el_orth" << endl;
-      for (float t = 0.0; t < conf.lc_t_max; t = t + conf.lc_t_step) {
+      for (float t = 0.0; t < conf.lc_dist_max; t = t + conf.lc_dist_step) {
         if (counter < conf.nLCsteps) {
           outf << t << " ";
           outf << lc[counter + 0 * c] << " " << lc[counter + 1 * c] << " ";
