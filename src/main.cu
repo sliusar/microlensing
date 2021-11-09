@@ -30,6 +30,21 @@ int write_image(char* filename, int* image, Configuration c) {
   return 0;
 }
 
+int write_lc(char* filename, float* lc, Configuration c) {
+  FILE *fp = fopen(filename, "wb");
+  if(fp == NULL) {
+    cout << "Error opening the file " << filename << endl;
+    return -1;
+  }
+  fwrite((const void*)&c.nLCcolumns, sizeof(c.nLCcolumns), 1, fp);
+  fwrite((const void*)&c.nLCsteps, sizeof(c.nLCsteps), 1, fp);
+  fwrite((const void*)&c.source_size, sizeof(c.source_size), 1, fp);
+  fwrite((const void*)&c.eccentricity, sizeof(c.eccentricity), 1, fp);
+  fwrite((const void*)&lc[0], sizeof(lc[0]), c.nLCcolumns * c.nLCsteps, fp);
+  fclose(fp);
+  return 0;
+}
+
 double getCurrentTimestamp() {
   struct timeval time_now{};
   gettimeofday(&time_now, nullptr);
@@ -208,12 +223,15 @@ int main(const int argc, const char** argv) {
       cout << "    Skipping image data writing to " << filename << " ... " << endl;
     }
 
-    sprintf(filename, "%s/lc_%.2f.dat", output_folder, t);
+    
     if (conf.lc_enabled) {
+      sprintf(filename, "%s/lc_%.2f.dat", output_folder, t);
       StartTimer();
       cout << "    Writing light curves data to " << filename << " ... " << flush;
-      outf.open(filename);
- 
+      write_lc(filename, lc, conf);
+
+      sprintf(filename, "%s/lc_%.2f.txt", output_folder, t);
+      outf.open(filename); 
       // debugging line start
       outf << "# - - - ";
       for (int i = 2; i < conf.nLCcolumns; i+= 2) {
@@ -223,7 +241,7 @@ int main(const int argc, const char** argv) {
       // debugging line end
 
       int counter = 0;
-      outf << "# t y1 y2 ad gauss ld pl el el_orth" << endl;
+      outf << "# t y1 y2 ad(1) gauss(2) ld(3) pl(4) el(5) el_orth(6)" << endl;
       for (float t = 0.0; t < conf.lc_dist_max; t = t + conf.lc_dist_step) {
           outf << t << " " << lc[counter + 0 * conf.nLCsteps] << " " << lc[counter + 1 * conf.nLCsteps] << " ";
           for (int i = 2; i < conf.nLCcolumns; i+=2) {
