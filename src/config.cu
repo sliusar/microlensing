@@ -64,10 +64,20 @@ Configuration::Configuration(const char* filename) {
     nRaysLine = (int)ceil(2 * R_rays / dx_rays);
     nRaysSq = nRaysLine * nRaysLine;
 
-    nLCsteps = (int)round(lc_dist_max / lc_dist_step);
+    nCountSourceSizes = 0;
+    nCountEccentricities = 0;
+    nTimeSteps = 0;
+    nLCsteps = 0;
+
+    for (float s = source_size[0]; s < source_size[1]; s+=source_size[2]) nCountSourceSizes++;
+    for (float e = eccentricity[0]; e < eccentricity[1]; e+=eccentricity[2]) nCountEccentricities++;
+    for (float t = 0; t < t_max; t += dt) nTimeSteps++;
+    for (float d = 0; d < lc_dist_max; d += lc_dist_step) nLCsteps++;
+
+    nLCsteps += 1; // extra line for debugging
+
     //nLCcolumns = 2 * ((int)round((source_size[1] - source_size[0])/source_size[2]) * (int)round((eccentricity[1] - eccentricity[0])/eccentricity[2])) + 2;
-    nLCcolumns = 2 + 2 * (1 /*ad*/ + 1 /*gs*/ + 1 /*ld*/ + 1 /*pl*/ + 1 /*el*/ + 1 /*el_orth*/);
-    nTimeSteps = (int)round((t_max + dt) / dt);
+    nLCcolumns = 2 + nCountSourceSizes * (2 /*ad*/ + 2 /*gs*/ + 2 /*ld*/ + 2 /*pl*/ + nCountEccentricities * (2 /*el*/ + 2 /*el_orth*/));
 
     image_pixel_y1_size = (image_y1_right - image_y1_left) / image_width;
     image_pixel_y2_size = (image_y2_top - image_y2_bottom) / image_height;
@@ -113,8 +123,8 @@ void Configuration::display() {
     cout << endl;
 
     cout << "--- Sources ---" << endl;
-    cout << "source_size: [" << source_size[0] << ", " << source_size[1] << "], step = " << source_size[2] << endl;
-    cout << "eccentricity: [" << eccentricity[0] << ", " << eccentricity[1] << "], step = " << eccentricity[2] << endl;
+    cout << "source_size: [" << source_size[0] << ", " << source_size[1] << "), step = " << source_size[2] << " (" << nCountSourceSizes << " steps in total)" << endl;
+    cout << "eccentricity: [" << eccentricity[0] << ", " << eccentricity[1] << "), step = " << eccentricity[2] << " (" << nCountEccentricities << " steps in total)" << endl;
     cout << "p_ld: " << p_ld << endl;
     cout << "p_pl: " << p_pl << endl;
 
@@ -122,6 +132,7 @@ void Configuration::display() {
 }
 
 void Configuration::prepare_sources() {
+    /*
     float src_size = source_size[0];
     float ecc = eccentricity[0];
 
@@ -148,4 +159,5 @@ void Configuration::prepare_sources() {
 
     a2_el = a_el * a_el;
     b2_el = b_el * b_el;
+    */
 }

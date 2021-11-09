@@ -60,16 +60,14 @@ void createLC(float *lc_trajectory, const Configuration conf) {
     float y2_sin = sin(deg2rad(conf.lc_angle));
     float y1, y2;
     for (float t = 0.0; t < conf.lc_dist_max; t = t + conf.lc_dist_step) {
-        if (counter < conf.nLCsteps) {
           y1 = conf.lc_start_y1 + t * y1_cos;
           y2 = conf.lc_start_y2 + t * y2_sin;
           lc_trajectory[counter + 0 * conf.nLCsteps] = y1; // Y1 coordinate
           lc_trajectory[counter + 1 * conf.nLCsteps] = y2; // Y2 coordinate
           for (int i = 2; i < conf.nLCcolumns; i += 2) {
-            lc_trajectory[counter +      i  * conf.nLCsteps] = 0.0; // Amplitude value
-            lc_trajectory[counter + (1 + i) * conf.nLCsteps] = 0.0; // Normalization value
+            lc_trajectory[counter + (i + 0) * conf.nLCsteps] = 0.0; // Amplitude value
+            lc_trajectory[counter + (i + 1) * conf.nLCsteps] = 0.0; // Normalization value
           }
-        }
         counter++;
     }
 }
@@ -77,8 +75,8 @@ void createLC(float *lc_trajectory, const Configuration conf) {
 void resetLC(float *lc_trajectory, const Configuration conf) {
   for (int counter = 0; counter < conf.nLCsteps; counter++) {
     for (int i = 2; i < conf.nLCcolumns; i += 2) {
-      lc_trajectory[counter +      i  * conf.nLCsteps] = 0.0; // Amplitude value
-      lc_trajectory[counter + (1 + i) * conf.nLCsteps] = 0.0; // Normalization value
+      lc_trajectory[counter + (i + 0) * conf.nLCsteps] = 0.0; // Amplitude value
+      lc_trajectory[counter + (i + 1) * conf.nLCsteps] = 0.0; // Normalization value
     }
   }
 }
@@ -142,61 +140,135 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
 __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
   int w = blockIdx.x * blockDim.x + threadIdx.x;
   int h = blockIdx.y * blockDim.y + threadIdx.y;
+  int pix = image[w * c.image_height + h];
 
-  if (w * c.image_height + h < c.image_height * c.image_width) {
+  if ((pix > 0) && (w * c.image_height + h < c.image_height * c.image_width)) {
     float r_x1 = w * c.image_pixel_y1_size + c.image_y1_left;
     float r_x2 = h * c.image_pixel_y2_size + c.image_y2_bottom;
   
     float factorex_gs, factorex_ld, factorex_pl, factorex_ad, factorex_el, factorex_el_p;
-    for (int i = 0; i < c.nLCsteps; i++) {
+    for (int i = 0; i < c.nLCsteps - 1; i++) {
       float lc_y1 = lc[i + 0 * c.nLCsteps];
       float lc_y2 = lc[i + 1 * c.nLCsteps];
       float d = dst(lc_y1 - r_x1, lc_y2 - r_x2);
       float d2 = d * d;
+ 
+      int index = 2;
+      for (float source_size = c.source_size[0]; source_size < c.source_size[1]; source_size+=c.source_size[2]) {
+        if (d < 10 * source_size) {
 
+          float R_gs = source_size;
+          float R2_gs = R_gs * R_gs;
       
+          float R_1_2_ld = source_size * sqrt(log(2.0));
+          float R_ld = R_1_2_ld / sqrt(1.0 - pow(0.5, 2)/(c.p_ld + 2));
+          float R2_ld = R_ld * R_ld;
+    
+          float R_1_2_pl = source_size * sqrt(log(2.0));
+          float R_pl = R_1_2_pl / sqrt((pow(2.0, 1.0/(c.p_pl - 1)) - 1.0)/log(2.0));
+          float R2_pl = R_pl * R_pl;
       
+          float R_1_2_ad = source_size * sqrt(log(2.0));
+          float R_ad = R_1_2_ad/4.0;
+          float R2_ad = R_ad * R_ad;
+    
+          factorex_gs = expf(- d2 / R2_gs);
+          factorex_ld = ((c.p_ld + 1)/(M_PI * R2_ld)) * H(1 - d2/R2_ld) * pow(1 - d2/R2_ld, c.p_ld);
+          factorex_pl = ((c.p_pl - 1)/(M_PI * R2_pl)) * (1/pow(1 + d2/R2_pl, c.p_pl));
+          if (d > R_ad) {
+            factorex_ad = (3 * R_ad  / (2 * M_PI * pow(d, 3))) * (1 - sqrt(R_ad/d));
+            atomicAdd(&lc[i + (index + 0) * c.nLCsteps], factorex_ad); // Normalization
+            atomicAdd(&lc[i + (index + 1) * c.nLCsteps], pix * factorex_ad); // Amplitude value, non-normalized  
+          }
+          atomicAdd(&lc[i + (index + 2) * c.nLCsteps], factorex_gs); // Normalization
+          atomicAdd(&lc[i + (index + 3) * c.nLCsteps], pix * factorex_gs); // Amplitude value, non-normalized  
+  
+          atomicAdd(&lc[i + (index + 4) * c.nLCsteps], factorex_ld); // Normalization
+          atomicAdd(&lc[i + (index + 5) * c.nLCsteps], pix * factorex_ld); // Amplitude value, non-normalized  
+  
+          atomicAdd(&lc[i + (index + 6) * c.nLCsteps], factorex_pl); // Normalization
+          atomicAdd(&lc[i + (index + 7) * c.nLCsteps], pix * factorex_pl); // Amplitude value, non-normalized  
+          
+          int e_index = index + 8;
+          for (float eccentricity = c.eccentricity[0]; eccentricity < c.eccentricity[1]; eccentricity+=c.eccentricity[2]) {
+            float e2_el = eccentricity * eccentricity;
+            float a_el = source_size / (1 - e2_el);
+            float b_el = source_size * (1 - e2_el);
+        
+            float a2_el = a_el * a_el;
+            float b2_el = b_el * b_el;
 
+            float d_el = dst((lc_y1 - r_x1) / a_el, (lc_y2 - r_x2) / b_el);
+            float d2_el = d_el * d_el;
+    
+            float d_el_p = dst((lc_y1 - r_x1) / b_el, (lc_y2 - r_x2) / a_el);
+            float d2_el_p = d_el_p * d_el_p;
 
-
-
-
-
-      float d_el = dst((lc_y1 - r_x1) / c.a_el, (lc_y2 - r_x2) / c.b_el);
-      float d2_el = d_el * d_el;
-
-      float d_el_p = dst((lc_y1 - r_x1) / c.b_el, (lc_y2 - r_x2) / c.a_el);
-      float d2_el_p = d_el_p * d_el_p;
-
-      if (d < 10 * c.R_gs) {
-          int pix = image[w * c.image_height + h];
-          if (pix > 0) {
-            factorex_gs = expf(- d2 / c.R2_gs);
-            factorex_ld = ((c.p_ld + 1)/(M_PI * c.R2_ld)) * H(1 - d2/c.R2_ld) * pow(1 - d2/c.R2_ld, c.p_ld);
-            factorex_pl = ((c.p_pl - 1)/(M_PI * c.R2_pl)) * (1/pow(1 + d2/c.R2_pl, c.p_pl));
             factorex_el = expf( - d2_el);
             factorex_el_p = expf( - d2_el_p);
-            if (d > c.R_ad) {
-              factorex_ad = (3 * c.R_ad  / (2 * M_PI * pow(d, 3))) * (1 - sqrt(c.R_ad/d));
-              atomicAdd(&lc[i + 2 * c.nLCsteps], factorex_ad); // Normalization
-              atomicAdd(&lc[i + 3 * c.nLCsteps], pix * factorex_ad); // Amplitude value, non-normalized  
-            }
-            atomicAdd(&lc[i + 4 * c.nLCsteps], factorex_gs); // Normalization
-            atomicAdd(&lc[i + 5 * c.nLCsteps], pix * factorex_gs); // Amplitude value, non-normalized  
+  
+            atomicAdd(&lc[i + (e_index + 0) * c.nLCsteps], factorex_el); // Normalization
+            atomicAdd(&lc[i + (e_index + 1) * c.nLCsteps], pix * factorex_el); // Amplitude value, non-normalized  
 
-            atomicAdd(&lc[i + 6 * c.nLCsteps], factorex_ld); // Normalization
-            atomicAdd(&lc[i + 7 * c.nLCsteps], pix * factorex_ld); // Amplitude value, non-normalized  
+            atomicAdd(&lc[i + (e_index + 2) * c.nLCsteps], factorex_el_p); // Normalization
+            atomicAdd(&lc[i + (e_index + 3) * c.nLCsteps], pix * factorex_el_p); // Amplitude value, non-normalized  
 
-            atomicAdd(&lc[i + 8 * c.nLCsteps], factorex_pl); // Normalization
-            atomicAdd(&lc[i + 9 * c.nLCsteps], pix * factorex_pl); // Amplitude value, non-normalized  
+            lc[(c.nLCsteps - 1) + (e_index + 0) * c.nLCsteps] = eccentricity;
+            lc[(c.nLCsteps - 1) + (e_index + 1) * c.nLCsteps] = 5;
 
-            atomicAdd(&lc[i + 10 * c.nLCsteps], factorex_el); // Normalization
-            atomicAdd(&lc[i + 11 * c.nLCsteps], pix * factorex_el); // Amplitude value, non-normalized  
+            lc[(c.nLCsteps - 1) + (e_index + 2) * c.nLCsteps] = eccentricity;
+            lc[(c.nLCsteps - 1) + (e_index + 3) * c.nLCsteps] = 6;
 
-            atomicAdd(&lc[i + 12 * c.nLCsteps], factorex_el_p); // Normalization
-            atomicAdd(&lc[i + 13 * c.nLCsteps], pix * factorex_el_p); // Amplitude value, non-normalized  
+            e_index += 4;
           }
+          lc[(c.nLCsteps - 1) + (index + 0) * c.nLCsteps] = R_gs;
+          lc[(c.nLCsteps - 1) + (index + 1) * c.nLCsteps] = 1;
+  
+          lc[(c.nLCsteps - 1) + (index + 2) * c.nLCsteps] = R_gs;
+          lc[(c.nLCsteps - 1) + (index + 3) * c.nLCsteps] = 2;
+  
+          lc[(c.nLCsteps - 1) + (index + 4) * c.nLCsteps] = R_gs;
+          lc[(c.nLCsteps - 1) + (index + 5) * c.nLCsteps] = 3;
+  
+          lc[(c.nLCsteps - 1) + (index + 6) * c.nLCsteps] = R_gs;
+          lc[(c.nLCsteps - 1) + (index + 7) * c.nLCsteps] = 4;
+        }
+        index += 8 + 4 * c.nCountEccentricities;
       }
+      /*
+      if (d < 10 * c.R_gs) {
+        float d_el = dst((lc_y1 - r_x1) / c.a_el, (lc_y2 - r_x2) / c.b_el);
+        float d2_el = d_el * d_el;
+
+        float d_el_p = dst((lc_y1 - r_x1) / c.b_el, (lc_y2 - r_x2) / c.a_el);
+        float d2_el_p = d_el_p * d_el_p;
+          
+        factorex_gs = expf(- d2 / c.R2_gs);
+        factorex_ld = ((c.p_ld + 1)/(M_PI * c.R2_ld)) * H(1 - d2/c.R2_ld) * pow(1 - d2/c.R2_ld, c.p_ld);
+        factorex_pl = ((c.p_pl - 1)/(M_PI * c.R2_pl)) * (1/pow(1 + d2/c.R2_pl, c.p_pl));
+        factorex_el = expf( - d2_el);
+        factorex_el_p = expf( - d2_el_p);
+        if (d > c.R_ad) {
+          factorex_ad = (3 * c.R_ad  / (2 * M_PI * pow(d, 3))) * (1 - sqrt(c.R_ad/d));
+          atomicAdd(&lc[i + 2 * c.nLCsteps], factorex_ad); // Normalization
+          atomicAdd(&lc[i + 3 * c.nLCsteps], pix * factorex_ad); // Amplitude value, non-normalized  
+        }
+        atomicAdd(&lc[i + 4 * c.nLCsteps], factorex_gs); // Normalization
+        atomicAdd(&lc[i + 5 * c.nLCsteps], pix * factorex_gs); // Amplitude value, non-normalized  
+
+        atomicAdd(&lc[i + 6 * c.nLCsteps], factorex_ld); // Normalization
+        atomicAdd(&lc[i + 7 * c.nLCsteps], pix * factorex_ld); // Amplitude value, non-normalized  
+
+        atomicAdd(&lc[i + 8 * c.nLCsteps], factorex_pl); // Normalization
+        atomicAdd(&lc[i + 9 * c.nLCsteps], pix * factorex_pl); // Amplitude value, non-normalized  
+
+        atomicAdd(&lc[i + 10 * c.nLCsteps], factorex_el); // Normalization
+        atomicAdd(&lc[i + 11 * c.nLCsteps], pix * factorex_el); // Amplitude value, non-normalized  
+
+        atomicAdd(&lc[i + 12 * c.nLCsteps], factorex_el_p); // Normalization
+        atomicAdd(&lc[i + 13 * c.nLCsteps], pix * factorex_el_p); // Amplitude value, non-normalized  
+      }
+      */
     }   
   }
 }

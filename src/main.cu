@@ -185,7 +185,7 @@ int main(const int argc, const char** argv) {
 
     if (conf.output_rays) {
       sprintf(filename, "%s/rays_%.2f.dat", output_folder, t);
-      cout << "    Writing data to " << filename << " ... " << flush;
+      cout << "    Writing rays data to " << filename << " ... " << flush;
       outf.open(filename);
       for (int i = 0; i <= conf.nRays; i++) {
         if (rays[i].x1 >= conf.image_y1_left && rays[i].x1 <= conf.image_y1_right && rays[i].x2 >= conf.image_y2_bottom && rays[i].x2 <= conf.image_y2_top) {
@@ -199,13 +199,13 @@ int main(const int argc, const char** argv) {
     sprintf(filename, "%s/image_%.2f.dat", output_folder, t);
     if (conf.save_images) {
       StartTimer();
-      cout << "    Writing data to " << filename << " ... " << flush;
+      cout << "    Writing image data to " << filename << " ... " << flush;
       write_image(filename, image, conf);
       _t = GetElapsedTime();
       t_output += _t;
       cout << _t << "s" << endl;  
     } else {
-      cout << "    Skipping writing data to " << filename << " ... " << endl;
+      cout << "    Skipping image data writing to " << filename << " ... " << endl;
     }
 
     sprintf(filename, "%s/lc_%.2f.dat", output_folder, t);
@@ -213,24 +213,27 @@ int main(const int argc, const char** argv) {
       StartTimer();
       cout << "    Writing light curves data to " << filename << " ... " << flush;
       outf.open(filename);
-      int c = conf.nLCsteps;
  
+      // debugging line start
+      outf << "# - - - ";
+      for (int i = 2; i < conf.nLCcolumns; i+= 2) {
+        outf << lc[(conf.nLCsteps - 1) + (i + 1) * conf.nLCsteps] << "|" <<  lc[(conf.nLCsteps - 1) + i * conf.nLCsteps] << " ";
+      }
+      outf << endl;
+      // debugging line end
+
       int counter = 0;
       outf << "# t y1 y2 ad gauss ld pl el el_orth" << endl;
       for (float t = 0.0; t < conf.lc_dist_max; t = t + conf.lc_dist_step) {
-        if (counter < conf.nLCsteps) {
-          outf << t << " ";
-          outf << lc[counter + 0 * c] << " " << lc[counter + 1 * c] << " ";
-          outf << lc[counter + 3 * c] / lc[counter + 2 * c] << " ";
-          outf << lc[counter + 5 * c] / lc[counter + 4 * c] << " ";
-          outf << lc[counter + 7 * c] / lc[counter + 6 * c] << " ";
-          outf << lc[counter + 9 * c] / lc[counter + 8 * c] << " ";
-          outf << lc[counter + 11 * c] / lc[counter + 10 * c] << " ";
-          outf << lc[counter + 13 * c] / lc[counter + 12 * c] << " ";
+          outf << t << " " << lc[counter + 0 * conf.nLCsteps] << " " << lc[counter + 1 * conf.nLCsteps] << " ";
+          for (int i = 2; i < conf.nLCcolumns; i+=2) {
+            outf << lc[counter + (i + 1) * conf.nLCsteps] / lc[counter + i * conf.nLCsteps] << " ";
+          }
           outf << endl;
-        }
         counter++;
       }
+
+
       outf.close();
       _t = GetElapsedTime();
       t_output += _t;
