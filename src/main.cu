@@ -201,17 +201,6 @@ int main(const int argc, const char** argv) {
       StartTimer();
       cout << "    Writing data to " << filename << " ... " << flush;
       write_image(filename, image, conf);
-      //outf.open(filename);
-      //outf << "# image (" << conf.image_width << ", " << conf.image_height << ")" << endl;
-      //outf << "# x in (" << conf.image_y1_left << ", " << conf.image_y1_right << ")" << endl;
-      //outf << "# y in (" << conf.image_y2_bottom << ", " << conf.image_y2_top << ")" << endl;
-
-      //for (int j = 0; j < conf.image_height; j++) {
-      //  for (int i = 0; i < conf.image_width; i++) {
-      //    outf << image[i * conf.image_width + j] << endl;
-      //  }
-      //}
-      //outf.close();
       _t = GetElapsedTime();
       t_output += _t;
       cout << _t << "s" << endl;  

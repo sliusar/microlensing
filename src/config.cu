@@ -122,7 +122,6 @@ void Configuration::display() {
 }
 
 void Configuration::prepare_sources() {
-    
     float src_size = source_size[0];
     float ecc = eccentricity[0];
 

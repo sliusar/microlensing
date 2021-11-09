@@ -28,7 +28,6 @@ class Configuration {
         float eccentricity[3];
         float p_ld, p_pl;
 
-
         float R_gs, R2_gs, R_1_2_ld, R_ld, R2_ld, R_1_2_pl, R_pl, R2_pl, R_1_2_ad, R_ad, R2_ad; // Source-related, calculated
         float e_el, e2_el, a_el, b_el, a2_el, b2_el;
 
