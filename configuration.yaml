@@ -1,10 +1,10 @@
 # General configuration
-randomise_seed_number: 12222234 # if -1 than time is used, > 0 than this number is used
-configuration_id: "e0.1"
+randomise_seed_number: 1234567 # if -1 than time is used, > 0 than this number is used, if 0 then no seeding is performed
+configuration_id: "e0.1-0.9_r0.1-0.7"
 save_images: true
 output_rays: false
 debug: false
-operation_mode: 0 # 0 - evolve microlenses positions using V_max on each step, 1 - randomize microlenses positions on each step. The dt and t_max are used to define number of steps.
+operation_mode: 1 # 0 - evolve microlenses positions using V_max on each step, 1 - randomize microlenses positions on each step. The dt and t_max are used to define number of steps.
 
 # GLS configuration
 sigma: 0.5
@@ -14,11 +14,11 @@ R_field: 100 # the radius of microlenses field
 M_max: 1.0 # the microlenses masses will be in the range (0, M_max)
 V_max: 1.0 # the microlenses velocities will be in the range (-V_max, V_max)
 dt: 0.1 # time step
-t_max: 50 # time will be in the range [0, t_max) with a step dt
+t_max: 100 # time will be in the range [0, t_max) with a step dt
 
 # Rays configuration
 R_rays: 100
-dx_rays: 0.03
+dx_rays: 0.02
 
 # Output image definitions
 image_width: 1000
@@ -35,21 +35,32 @@ lc_start_y1: -10
 lc_start_y2: -5
 lc_angle: 1 # degrees
 lc_dist_max: 20
-lc_dist_step: 0.05
+lc_dist_step: 0.01
 
 # Sources configuration
-source_size: 0.2
-eccentricity: 0.1
+source_size: [0.1, 0.701, 0.1] # start, stop, step
+eccentricity: [0.1, 0.901, 0.1] # start, stop, step
 p_ld: 2.0
 p_pl: 1.5
 
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
-# Raytracing time: 831.744s (mean: 1.66017s)
-# Output time: 10.7794s (mean: 0.0215158s)
-# Total time: 881.059s
+# Raytracing time: 23.5123s (mean: 2.35123s)
+# Output time: 0.289589s (mean: 0.0289589s)
+# Total time: 29.5342s
 #
-# real    14m41.188s
-# user    10m24.073s
-# sys     4m14.359s
+# real    0m29.685s
+# user    0m21.032s
+# sys     0m8.368s
+
+# rs = 0.03 rE = 1.5 light days (λ = 5430 Å)
+
+# Microlensing of Q2237+0305: Simulations and Statistics
+# rE ≈ 0.06(M/M⊙)**(1/2) pc 
+# relative source velocity 4000 ± 2000 km/s
+# m \in [0.1 M⊙, 1 M⊙] salpeter mass function
+# sigma \in {1, 0.5, 0.25}
+# 40 μ as ≈ 0.32 pc
+
+

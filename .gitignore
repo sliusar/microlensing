@@ -2,10 +2,11 @@ gravlens
 bin/*
 obj/*
 orig/*
+logs/*
 .ipynb_checkpoints/
 rays_*dat
-images/*.dat
-images/*.mp4
+images/*
 output/*
 .vscode
 input/*yaml
+output*
