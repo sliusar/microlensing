@@ -2,7 +2,7 @@
 randomise_seed_number: 0 # if -1 than time is used, > 0 than this number is used, if 0 then no seeding is performed
 configuration_id: "reference"
 save_images: true
-output_rays: false
+save_rays: false
 debug: false
 operation_mode: 1 # 0 - evolve microlenses positions using V_max on each step, 1 - randomize microlenses positions on each step. The dt and t_max are used to define number of steps.
 
