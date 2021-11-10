@@ -45,7 +45,7 @@ Configuration::Configuration(const char* filename) {
 
     lc_enabled = config["lc_enabled"].as<bool>();
 
-    output_rays = config["output_rays"].as<bool>();
+    save_rays = config["save_rays"].as<bool>();
 
     std::vector<float> s = config["source_size"].as<std::vector<float>>();
     std::vector<float> e = config["eccentricity"].as<std::vector<float>>();

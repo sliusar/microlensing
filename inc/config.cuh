@@ -22,7 +22,7 @@ class Configuration {
         float image_pixel_y1_size, image_pixel_y2_size; // Calculated
         
         float lc_start_y1, lc_start_y2, lc_angle, lc_dist_max, lc_dist_step;
-        bool lc_enabled, output_rays;
+        bool lc_enabled, save_rays;
 
         float source_size[3];
         float eccentricity[3];

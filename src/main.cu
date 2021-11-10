@@ -171,7 +171,7 @@ int main(const int argc, const char** argv) {
     cout << "    [CUDA] Running ray tracing ... " << flush;
     StartTimer();
     deflectRays<<<nBlocksRays, CUDA_BLOCK_SIZE>>>(ul_buf, rays_buf, conf, t, image_buf, lc_buf); // compute ray deflections
-    if (conf.output_rays) cudaMemcpy(rays, rays_buf, rays_bytes, cudaMemcpyDeviceToHost);
+    if (conf.save_rays) cudaMemcpy(rays, rays_buf, rays_bytes, cudaMemcpyDeviceToHost);
     if (conf.lc_enabled) cudaMemcpy(lc, lc_buf, lc_bytes, cudaMemcpyDeviceToHost);
     if (conf.save_images) cudaMemcpy(image, image_buf, image_bytes, cudaMemcpyDeviceToHost);
     cudaError_t err = cudaDeviceSynchronize();
@@ -198,7 +198,7 @@ int main(const int argc, const char** argv) {
       cout << _t << "s" << endl;
     }
 
-    if (conf.output_rays) {
+    if (conf.save_rays) {
       sprintf(filename, "%s/rays_%.2f.dat", output_folder, t);
       cout << "    Writing rays data to " << filename << " ... " << flush;
       outf.open(filename);
@@ -270,9 +270,10 @@ int main(const int argc, const char** argv) {
   cudaFree(image_buf);
 
   cout << endl << ">>> Run summary:" << endl;
-  cout << "    Raytracing time: " << t_raytracing << "s (mean: " << t_raytracing/counter << "s)" << endl;
-  cout << "    Output time: " << t_output << "s (mean: " << t_output / counter << "s)" << endl;
-  cout << "    Total time: " << getCurrentTimestamp() - t0 << "s" << endl;
+  cout << " Raytracing time: " << t_raytracing << "s (mean: " << t_raytracing/counter << "s)" << endl;
+  cout << " Light curve calculation time: " << t_lc << "s (mean: " << t_lc/counter << "s)" << endl;
+  cout << " Output time: " << t_output << "s (mean: " << t_output / counter << "s)" << endl;
+  cout << " Total time: " << getCurrentTimestamp() - t0 << "s" << endl;
 
   return 0;
 }

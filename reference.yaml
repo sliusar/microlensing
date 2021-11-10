@@ -38,21 +38,22 @@ lc_dist_max: 20
 lc_dist_step: 0.05
 
 # Sources configuration
-source_size: [0.1, 0.7, 0.1] # start, stop, step
-eccentricity: [0.1, 0.9, 0.1] # start, stop, step
+source_size: [0.1, 0.701, 0.1] # start, stop, step
+eccentricity: [0.1, 0.901, 0.1] # start, stop, step
 p_ld: 2.0
 p_pl: 1.5
 
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
-# Raytracing time: 23.5123s (mean: 2.35123s)
-# Output time: 0.289589s (mean: 0.0289589s)
-# Total time: 29.5342s
+# Raytracing time: 23.5115s (mean: 2.35115s)
+# Light curve calculation time: 5.25238s (mean: 0.525238s)
+# Output time: 0.357522s (mean: 0.0357522s)
+# Total time: 31.4721s
 #
-# real    0m29.685s
-# user    0m21.032s
-# sys     0m8.368s
+# real    0m31.585s
+# user    0m22.181s
+# sys     0m9.174s
 
 # rs = 0.03 rE = 1.5 light days (λ = 5430 Å)
 

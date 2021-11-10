@@ -120,7 +120,7 @@ __global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, co
     ray_x1 = (1 - c.gamma) * ray_x1 - c.sigma_c * ray_x1 - sum_x1;
     ray_x2 = (1 + c.gamma) * ray_x2 - c.sigma_c * ray_x2 - sum_x2;
     //
-    //if (c.output_rays) {
+    //if (c.save_rays) {
     //    rays[ri].x1 = ray_x1;
     //    rays[ri].x2 = ray_x2;    
     //}
@@ -170,7 +170,7 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
       
           float R_1_2_ad = source_size * sqrt(log(2.0));
           float R_ad = R_1_2_ad/4.0;
-          float R2_ad = R_ad * R_ad;
+          //float R2_ad = R_ad * R_ad; // unused
     
           factorex_gs = expf(- d2 / R2_gs);
           factorex_ld = ((c.p_ld + 1)/(M_PI * R2_ld)) * H(1 - d2/R2_ld) * pow(1 - d2/R2_ld, c.p_ld);
@@ -195,8 +195,8 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
             float a_el = source_size / (1 - e2_el);
             float b_el = source_size * (1 - e2_el);
         
-            float a2_el = a_el * a_el;
-            float b2_el = b_el * b_el;
+            //float a2_el = a_el * a_el; // unused
+            //float b2_el = b_el * b_el; // unused
 
             float d_el = dst((lc_y1 - r_x1) / a_el, (lc_y2 - r_x2) / b_el);
             float d2_el = d_el * d_el;

@@ -1,6 +1,6 @@
 # General configuration
 randomise_seed_number: 1234567 # if -1 than time is used, > 0 than this number is used, if 0 then no seeding is performed
-configuration_id: "e0.1-0.9_r0.1-0.7"
+configuration_id: "reference_long"
 save_images: true
 output_rays: false
 debug: false
@@ -14,7 +14,7 @@ R_field: 100 # the radius of microlenses field
 M_max: 1.0 # the microlenses masses will be in the range (0, M_max)
 V_max: 1.0 # the microlenses velocities will be in the range (-V_max, V_max)
 dt: 0.1 # time step
-t_max: 100 # time will be in the range [0, t_max) with a step dt
+t_max: 10 # time will be in the range [0, t_max) with a step dt
 
 # Rays configuration
 R_rays: 100
