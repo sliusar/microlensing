@@ -6,7 +6,7 @@
 class Configuration {
     char* filename;
     public:
-        bool debug;
+        int verbose;
 
         int operation_mode;
         bool save_images;

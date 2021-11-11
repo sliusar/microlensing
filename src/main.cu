@@ -11,7 +11,7 @@ using namespace std;
 #define CUDA_BLOCK_SIZE 1024
 #define CUDA_BLOCK_SIZE_2d 32
 
-bool debug = false;
+int verbose = 0;
 
 int write_image(char* filename, int* image, Configuration c) {
   FILE *fp = fopen(filename, "wb");
@@ -36,11 +36,25 @@ int write_lc(char* filename, float* lc, Configuration c) {
     cout << "Error opening the file " << filename << endl;
     return -1;
   }
-  fwrite((const void*)&c.nLCcolumns, sizeof(c.nLCcolumns), 1, fp);
+  int col_count = 3 + (c.nLCcolumns - 2)/2;
+  fwrite((const void*)&col_count, sizeof(col_count), 1, fp);
   fwrite((const void*)&c.nLCsteps, sizeof(c.nLCsteps), 1, fp);
   fwrite((const void*)&c.source_size, sizeof(c.source_size), 1, fp);
   fwrite((const void*)&c.eccentricity, sizeof(c.eccentricity), 1, fp);
-  fwrite((const void*)&lc[0], sizeof(lc[0]), c.nLCcolumns * c.nLCsteps, fp);
+  int counter = 0;
+  for (float t = 0.0; t < c.lc_dist_max; t = t + c.lc_dist_step) {
+    fwrite((const void*)&t, sizeof(float), 1, fp);
+    fwrite((const void*)&lc[counter + 0 * c.nLCsteps], sizeof(float), 1, fp);
+    fwrite((const void*)&lc[counter + 1 * c.nLCsteps], sizeof(float), 1, fp);
+    for (int i = 2; i < c.nLCcolumns; i+=2) {
+      float k = lc[counter + (i + 1) * c.nLCsteps] / lc[counter + i * c.nLCsteps];
+      fwrite((const void*)&k, sizeof(float), 1, fp);
+    }
+  counter++;
+}
+
+
+  
   fclose(fp);
   return 0;
 }
@@ -73,7 +87,7 @@ int main(const int argc, const char** argv) {
   Configuration conf(argv[1]);
   conf.prepare_sources();
   conf.display();
-  debug = conf.debug;
+  verbose = conf.verbose;
   if (conf.randomise_seed_number != 0) {
     long _seed = time(NULL);
     if (conf.randomise_seed_number > 0) _seed = conf.randomise_seed_number;
@@ -230,15 +244,16 @@ int main(const int argc, const char** argv) {
       cout << "    Writing light curves data to " << filename << " ... " << flush;
       write_lc(filename, lc, conf);
 
+#if DEBUG == true
       sprintf(filename, "%s/lc_%.2f.txt", output_folder, t);
-      outf.open(filename); 
-      // debugging line start
+      outf.open(filename);
+      cout << "    Writing light curves data to " << filename << " ... " << flush;
+
       outf << "# - - - ";
       for (int i = 2; i < conf.nLCcolumns; i+= 2) {
         outf << lc[(conf.nLCsteps - 1) + (i + 1) * conf.nLCsteps] << "|" <<  lc[(conf.nLCsteps - 1) + i * conf.nLCsteps] << " ";
       }
       outf << endl;
-      // debugging line end
 
       int counter = 0;
       outf << "# t y1 y2 ad(1) gauss(2) ld(3) pl(4) el(5) el_orth(6)" << endl;
@@ -251,8 +266,8 @@ int main(const int argc, const char** argv) {
         counter++;
       }
 
-
       outf.close();
+#endif
       _t = GetElapsedTime();
       t_output += _t;
       cout << _t << "s" << endl;        

@@ -4,7 +4,7 @@ Configuration::Configuration(const char* filename) {
 
     YAML::Node config = YAML::LoadFile(filename);
 
-    debug = config["debug"].as<bool>();
+    verbose = config["verbose"].as<int>();
     
     sigma = config["sigma"].as<float>();
     sigma_c = config["sigma_c"].as<float>();
@@ -74,9 +74,10 @@ Configuration::Configuration(const char* filename) {
     for (float t = 0; t < t_max; t += dt) nTimeSteps++;
     for (float d = 0; d < lc_dist_max; d += lc_dist_step) nLCsteps++;
 
-    nLCsteps += 1; // extra line for debugging
-
-    //nLCcolumns = 2 * ((int)round((source_size[1] - source_size[0])/source_size[2]) * (int)round((eccentricity[1] - eccentricity[0])/eccentricity[2])) + 2;
+#if DEBUG == true 
+    cout << endl << "DEBUGGING ACTIVATED: ADDITIONAL INFORMATION WILL BE INCLUDED IN THE LIGHT CURVE DATA" << endl << endl;
+    nLCsteps += 1; // extra line for debugging information, see kernels.cu
+#endif
     nLCcolumns = 2 + nCountSourceSizes * (2 /*ad*/ + 2 /*gs*/ + 2 /*ld*/ + 2 /*pl*/ + nCountEccentricities * (2 /*el*/ + 2 /*el_orth*/));
 
     image_pixel_y1_size = (image_y1_right - image_y1_left) / image_width;

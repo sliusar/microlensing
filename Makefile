@@ -1,7 +1,7 @@
 TARGET      := gravlens
 
 SRCDIR      := src
-INCDIR      := inc
+INCDIR      := include
 BUILDDIR    := obj
 TARGETDIR   := bin
 RESDIR      := res

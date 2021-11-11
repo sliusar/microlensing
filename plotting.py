@@ -73,9 +73,41 @@ def get_image_data(filename, gamma=0.6, debug=False, hide_max=False, logscale=Fa
             img[img == np.max(img)] = np.mean(img) # removing center-of-mass pixel with extreame amplification
         return img, extent
 
-def get_lc_data(filename):
-    data = np.loadtxt(filename)
-    return pd.DataFrame(data=data.copy(), columns=["t", "y1", "y2", "a_ad", "a_gs", "a_ld", "a_pl", "a_el", "a_el_orth"])
+def get_lc_data(filename, gamma=0.6, debug=False, hide_max=False, logscale=False):
+    with open(filename, "rb") as f:
+        lcs_columns = np.fromfile(f, dtype=np.int32, count=1)[0]
+        lcs_t_steps = np.fromfile(f, dtype=np.int32, count=1)[0]
+        lcs_sources = np.fromfile(f, dtype=np.float32, count=3)
+        lcs_eccentricities = np.fromfile(f, dtype=np.float32, count=3)
+        lcs_data = np.fromfile(f, dtype=np.float32).reshape((lcs_t_steps, lcs_columns)).astype(np.float)
+        labels=['t', 'y1', 'y2']
+        lcs = ['ad', 'gs', 'ld', 'pl']
+        lcs_el = ['el', 'el_orth']
+        sources = []
+        eccentricities = []
+        for s in np.arange(*lcs_sources).astype(np.float):
+            s = ('%f' % s).rstrip('0').rstrip('.')
+            sources.append(s)
+            for l in lcs:
+                labels.append("%s_r%s" % (l, s))
+            for e in np.arange(*lcs_eccentricities).astype(np.float):
+                e = ('%f' % e).rstrip('0').rstrip('.')
+                for l in lcs_el:
+                    labels.append("%s_r%s_e%s" % (l, s, e))                    
+        for e in np.arange(*lcs_eccentricities).astype(np.float):
+            e = ('%f' % e).rstrip('0').rstrip('.')
+            eccentricities.append(e)
+        df = pd.DataFrame(data=lcs_data.copy(), columns=labels)
+        df.attrs['lcs_columns'] = lcs_columns
+        df.attrs['lcs_t_steps'] = lcs_t_steps
+        
+        df.attrs['lcs_sources'] = lcs_sources
+        df.attrs['lcs_eccentricities'] = lcs_eccentricities
+        df.attrs['models'] = lcs
+        df.attrs['models_el'] = lcs_el
+        df.attrs['sources'] = sources
+        df.attrs['eccentricities'] = eccentricities
+        return df
 
 
 # -
@@ -291,24 +323,41 @@ lags = None
 lags1 = None
 colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
 step = 5
-iterations = np.arange(0, 100, 0.1)
 
+directory='s0.2_e0.1-0.9_r0.1-0.7'
 
-for e in ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']:
-    for r in ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7']:
-        print("e=%s r=%s t=%.2f" % (e, r, 0))
-        c0s = []
-        c1s = []
-        c2s = []
-        c3s = []
-        c4s = []
-        c5s = []
-        for t in iterations:
-            filename_lc = "output/e%s_r%s/lc_%.2f.dat" % (e, r, t)
-            filename_acf = "output/e%s_r%s/lc_%.2f.dat.acf" % (e, r, t)
-            filename_acf_avg = "output/e%s_r%s/lc_%.2f.dat.acf-avg" % (e, r, t)
+iterations = np.arange(0, 1, 0.1)
+for t in iterations:
+    filename_lc = f"output/{directory}/lc_%.2f.dat" % (t)
+    lc = get_lc_data(filename_lc)
+    for r in lc.attrs['sources']:
+        e = 0.0
+        print("t=%s r=%s e=%s" % (t, r, e))
+        ad = lc['ad_r%s' % r]
+        gs = lc['gs_r%s' % r]
+        ld = lc['ld_r%s' % r]
+        pl = lc['pl_r%s' % r]
+        for e in lc.attrs['eccentricities']:
+            el = lc['el_r%s_e%s' % (r, e)]
+            el_orth = lc['el_orth_r%s_e%s' % (r, e)]
             
-            lc = get_lc_data(filename_lc)
+            
+    break      
+            
+    filename_acf = "output/e%s_r%s/lc_%.2f.dat.acf" % (e, r, t)
+    filename_acf_avg = "output/e%s_r%s/lc_%.2f.dat.acf-avg" % (e, r, t)
+
+    for r in ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7']:    
+        for e in ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']:
+            print("e=%s r=%s t=%.2f" % (e, r, 0))
+            c0s = []
+            c1s = []
+            c2s = []
+            c3s = []
+            c4s = []
+            c5s = []
+
+            
 
             tc = lc['t']
             sig0 = lc['a_ad']
@@ -441,7 +490,7 @@ fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 12), gridspec_kw={'height
 fig.tight_layout()
 fig.subplots_adjust(left=0.09, top=0.98)
 
-iterations = np.arange(0, 100, 0.1)
+iterations = np.arange(0, 1, 0.01)
 
 ims = []
 max_ampl = []
@@ -449,23 +498,23 @@ s_max = 0
 for t in iterations:
     if 10 * t % 10 == 0:
         print("t=%.2f" % t)
-    filename1 = "output/e0.7_r0.2/image_%.2f.dat" % t
-    filename2 = "output/e0.7_r0.2/lc_%.2f.dat" % t
+    filename1 = "output/s0.2_e0.1-0.9_r0.1-0.7_ms/image_%.2f.dat" % t
+    filename2 = "output/s0.2_e0.1-0.9_r0.1-0.7_ms/lc_%.2f.dat" % t
     img, extent = get_image_data(filename1, logscale=True)
     lc = get_lc_data(filename2)
     title = ax1.text(0.5, 1.01, "t=%.2f" % t, ha="center",va="bottom", transform=ax1.transAxes, fontsize="large")
     line1 = ax1.imshow(img, interpolation='none', extent=extent, origin='lower')
     ax1.plot(lc['y1'], lc['y2'], color='red')
     
-    line2, = ax2.plot(lc['y1'], lc['a_el'],      '-', color=colors[0], label='EL' if t == 0 else None)
-    line3, = ax2.plot(lc['y1'], lc['a_el_orth'], '-', color=colors[1], label='EL ⊥' if t == 0 else None)
-    line4, = ax2.plot(lc['y1'], lc['a_gs'],      linestyle='dotted', color=colors[2], label='Gauss' if t == 0 else None)
+    line2, = ax2.plot(lc['t'], lc['el_r0.2_e0.7'],      '-', color=colors[0], label='EL' if t == 0 else None)
+    line3, = ax2.plot(lc['t'], lc['el_orth_r0.2_e0.7'], '-', color=colors[1], label='EL ⊥' if t == 0 else None)
+    line4, = ax2.plot(lc['t'], lc['gs_r0.2'],      linestyle='dotted', color=colors[2], label='Gauss' if t == 0 else None)
     
-    line5, = ax3.plot(lc['y1'], lc['a_ad'],     '-', color=colors[0], label='AD' if t == 0 else None)
-    line6, = ax3.plot(lc['y1'], lc['a_ld'],     '-', color=colors[1], label='LD' if t == 0 else None)
-    line7, = ax3.plot(lc['y1'], lc['a_pl'],     '-', color=colors[2], label='PL' if t == 0 else None)
+    line5, = ax3.plot(lc['t'], lc['ad_r0.2'],     '-', color=colors[0], label='AD' if t == 0 else None)
+    line6, = ax3.plot(lc['t'], lc['ld_r0.2'],     '-', color=colors[1], label='LD' if t == 0 else None)
+    line7, = ax3.plot(lc['t'], lc['pl_r0.2'],     '-', color=colors[2], label='PL' if t == 0 else None)
     
-    _m = max([max(lc[i]) for i in ['a_ad', 'a_gs', 'a_ld', 'a_pl', 'a_el', 'a_el_orth']])
+    _m = max([max(lc[i]) for i in ['ad_r0.2', 'gs_r0.2', 'ld_r0.2', 'pl_r0.2', 'el_r0.2_e0.7', 'el_orth_r0.2_e0.7']])
     s_max = _m if _m > s_max else s_max
     
     ims.append([line1, line2, line3, line4, line5, line6, line7, title])
@@ -561,7 +610,7 @@ for t in iterations:
     lc = get_lc_data(filename2)
     title = ax1.text(0.5, 1.01, "t=%.2f" % t, ha="center",va="bottom", transform=ax1.transAxes, fontsize="large")
     line1 = ax1.imshow(img, interpolation='none', extent=extent, origin='lower')
-    ax1.plot(lc['y1'], lc['y2'], color='red')
+    ax1.plot(lc['y1'], lc['y2'], color='red', linewidth='1')
     
     line2, = ax2.plot(lc['y1'], lc['a_el'],      '-', color=colors[0], label='EL' if t == 0 else None)
     line3, = ax2.plot(lc['y1'], lc['a_el_orth'], '-', color=colors[1], label='EL ⊥' if t == 0 else None)
@@ -588,5 +637,34 @@ ani.save('images/dynamic_images_all.mp4')
 plt.show()
 plt.close()
 # -
+
+
+
+
+
+# +
+figure = plt.figure(figsize=(12,5))
+plt.plot(x['t'], x['el_r0.1_e0.1'], color='blue')
+#plt.plot(x['t'], x['el_r0.2_e0.5'], color='grey')
+#plt.plot(x['t'], x['el_r0.3_e0.5'], color='grey')
+plt.plot(x['t'], x['gs_r0.1'], color='grey')
+#plt.plot(x['t'], x['el_r0.5_e0.5'], color='grey')
+#plt.plot(x['t'], x['el_r0.6_e0.5'], color='grey')
+plt.plot(x['t'], x['el_r0.7_e0.1'], color='red')
+
+
+plt.plot(x['t'], x['el_orth_r0.1_e0.1'], color='green')
+#plt.plot(x['t'], x['el_orth_r0.2_e0.5'], color='yellow')
+#plt.plot(x['t'], x['el_orth_r0.3_e0.5'], color='yellow')
+#plt.plot(x['t'], x['el_orth_r0.4_e0.5'], color='yellow')
+#plt.plot(x['t'], x['el_orth_r0.5_e0.5'], color='yellow')
+#plt.plot(x['t'], x['el_orth_r0.6_e0.5'], color='yellow')
+plt.plot(x['t'], x['el_orth_r0.7_e0.1'], color='cyan')
+
+plt.xlim([12.5, 16.0])
+plt.show()
+# -
+
+x.attrs
 
 

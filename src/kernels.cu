@@ -147,7 +147,12 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
     float r_x2 = h * c.image_pixel_y2_size + c.image_y2_bottom;
   
     float factorex_gs, factorex_ld, factorex_pl, factorex_ad, factorex_el, factorex_el_p;
+
+#if DEBUG == true
     for (int i = 0; i < c.nLCsteps - 1; i++) {
+#else
+    for (int i = 0; i < c.nLCsteps; i++) {
+#endif
       float lc_y1 = lc[i + 0 * c.nLCsteps];
       float lc_y2 = lc[i + 1 * c.nLCsteps];
       float d = dst(lc_y1 - r_x1, lc_y2 - r_x2);
@@ -208,30 +213,28 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
             factorex_el_p = expf( - d2_el_p);
   
             atomicAdd(&lc[i + (e_index + 0) * c.nLCsteps], factorex_el); // Normalization
-            atomicAdd(&lc[i + (e_index + 1) * c.nLCsteps], pix * factorex_el); // Amplitude value, non-normalized  
+            atomicAdd(&lc[i + (e_index + 1) * c.nLCsteps], pix * factorex_el); // Amplitude value, non-normalized
 
             atomicAdd(&lc[i + (e_index + 2) * c.nLCsteps], factorex_el_p); // Normalization
-            atomicAdd(&lc[i + (e_index + 3) * c.nLCsteps], pix * factorex_el_p); // Amplitude value, non-normalized  
-
+            atomicAdd(&lc[i + (e_index + 3) * c.nLCsteps], pix * factorex_el_p); // Amplitude value, non-normalized
+#if DEBUG == true            
             lc[(c.nLCsteps - 1) + (e_index + 0) * c.nLCsteps] = eccentricity;
             lc[(c.nLCsteps - 1) + (e_index + 1) * c.nLCsteps] = 5;
-
             lc[(c.nLCsteps - 1) + (e_index + 2) * c.nLCsteps] = eccentricity;
             lc[(c.nLCsteps - 1) + (e_index + 3) * c.nLCsteps] = 6;
-
+#endif
             e_index += 4;
           }
+#if DEBUG == true
           lc[(c.nLCsteps - 1) + (index + 0) * c.nLCsteps] = R_gs;
           lc[(c.nLCsteps - 1) + (index + 1) * c.nLCsteps] = 1;
-  
           lc[(c.nLCsteps - 1) + (index + 2) * c.nLCsteps] = R_gs;
           lc[(c.nLCsteps - 1) + (index + 3) * c.nLCsteps] = 2;
-  
           lc[(c.nLCsteps - 1) + (index + 4) * c.nLCsteps] = R_gs;
           lc[(c.nLCsteps - 1) + (index + 5) * c.nLCsteps] = 3;
-  
           lc[(c.nLCsteps - 1) + (index + 6) * c.nLCsteps] = R_gs;
           lc[(c.nLCsteps - 1) + (index + 7) * c.nLCsteps] = 4;
+#endif
         }
         index += 8 + 4 * c.nCountEccentricities;
       }
