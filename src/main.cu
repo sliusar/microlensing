@@ -281,7 +281,7 @@ int main(const int argc, const char** argv) {
       cout << _t << "s" << endl;
 #endif
     }
-    cout << "    Time spent: " << getCurrentTimestamp() - t_it << "s" << endl;
+    cout << "    Iteration time: " << getCurrentTimestamp() - t_it << "s" << endl;
   }
 
   free(microlenses);
