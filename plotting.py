@@ -549,17 +549,37 @@ plt.imshow(np.sqrt(np.einsum('j,i', np.power(x, 2), np.power(y, 2))))
 
 
 # +
-fig, ax1 = plt.subplots(1, 1, figsize=(10, 12), gridspec_kw={'height_ratios': [10]})
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 14), gridspec_kw={'height_ratios': [12, 1.2, 1.2]})
 fig.tight_layout()
 fig.subplots_adjust(left=0.09, top=0.98)
 
 t = 0.1
+r = 0.5
+e = 0.5
+
 filename1 = f"output/reference_test/image_%.2f.dat" % t
+filename2 = f"output/reference_test/lc_%.2f.dat" % t
 img, extent = get_image_data(filename1, logscale=True)
-img[img < 0.1] = 0
+lc = get_lc_data(filename2)
 title = ax1.text(0.5, 1.01, "t=%.2f" % t, ha="center",va="bottom", transform=ax1.transAxes, fontsize="large")
 line1 = ax1.imshow(img, interpolation='antialiased', extent=extent, origin='lower', vmin=1, vmax=2)
-ax1.plot(lc['y1'], lc['y2'], color='red')
+ax1.plot(lc['y1'], lc['y2'], color='red', linewidth=1, linestyle='dashed')
+
+ad = lc[f'ad_r{r}']
+gs = lc[f'gs_r{r}']
+ld = lc[f'ld_r{r}']
+pl = lc[f'pl_r{r}']
+el = lc[f'el_r{r}_e{e}']
+el_orth = lc[f'el_orth_r{r}_e{e}']
+
+line2, = ax2.plot(lc['t'], el,      '-', color=colors[0], label='EL' if t == 0 else None)
+line3, = ax2.plot(lc['t'], el_orth, '-', color=colors[1], label='EL ⊥' if t == 0 else None)
+line4, = ax2.plot(lc['t'], gs,      '-', color=colors[2], linestyle='dotted', label='Gauss' if t == 0 else None)
+
+line5, = ax3.plot(lc['t'], ad,      '-', color=colors[0], label='AD' if t == 0 else None)
+line6, = ax3.plot(lc['t'], ld,      '-', color=colors[1], label='LD' if t == 0 else None)
+line7, = ax3.plot(lc['t'], pl,      '-', color=colors[2], label='PL' if t == 0 else None)
+
 plt.show()
 plt.close()
 # -

@@ -53,16 +53,20 @@ int write_lc(char* filename, float* lc, Configuration c) {
   counter++;
 }
 
-
-  
   fclose(fp);
   return 0;
 }
 
 double getCurrentTimestamp() {
-  struct timeval time_now{};
+  struct timeval time_now;
   gettimeofday(&time_now, nullptr);
   return time_now.tv_sec + ((double)time_now.tv_usec / 1e6);
+}
+
+struct timeval getCurrentTime() {
+  struct timeval t_n;
+  gettimeofday(&t_n, nullptr);
+  return t_n;
 }
 
 int estimateRaysCount(float R_rays, float dx_rays) {
@@ -164,6 +168,7 @@ int main(const int argc, const char** argv) {
   bool microlenses_set = false;
   
   for (float t = 0; t <= conf.t_max; t = t + conf.dt) {
+    double t_it = getCurrentTimestamp();
     cout << endl << ">>> Iteration #" << ++counter << ", t=" << t << " (elapsed: " << getCurrentTimestamp() - t0 << "s)" << endl;
 
     memset(image, 0, image_bytes);
@@ -176,7 +181,7 @@ int main(const int argc, const char** argv) {
       microlenses_set = true;
       cout << "    Creating microlensing field ... " << flush;
       StartTimer();
-      randomiseMicrolenses(microlenses, conf);  
+      randomiseMicrolenses(microlenses, conf);
       cudaMalloc(&ul_buf, uls_bytes);
       cudaMemcpy(ul_buf, microlenses, uls_bytes, cudaMemcpyHostToDevice);
       cout << GetElapsedTime() << "s" << endl;
@@ -239,12 +244,16 @@ int main(const int argc, const char** argv) {
 
     
     if (conf.lc_enabled) {
-      sprintf(filename, "%s/lc_%.2f.dat", output_folder, t);
       StartTimer();
+      sprintf(filename, "%s/lc_%.2f.dat", output_folder, t);
       cout << "    Writing light curves data to " << filename << " ... " << flush;
       write_lc(filename, lc, conf);
+      _t = GetElapsedTime();
+      t_output += _t;
+      cout << _t << "s" << endl;
 
 #if DEBUG == true
+      StartTimer();
       sprintf(filename, "%s/lc_%.2f.txt", output_folder, t);
       outf.open(filename);
       cout << "    Writing light curves data to " << filename << " ... " << flush;
@@ -265,20 +274,21 @@ int main(const int argc, const char** argv) {
           outf << endl;
         counter++;
       }
-
       outf.close();
-#endif
+
       _t = GetElapsedTime();
       t_output += _t;
-      cout << _t << "s" << endl;        
+      cout << _t << "s" << endl;
+#endif
     }
+    cout << "    Time spent: " << getCurrentTimestamp() - t_it << "s" << endl;
   }
 
   free(microlenses);
   free(rays);
   free(image);
   free(lc);
-  
+
   cudaFree(ul_buf);
   cudaFree(lc_buf);
   cudaFree(rays_buf);
