@@ -490,19 +490,22 @@ source_size = 0.1
 p_ld = 2.0
 p_pl = 1.5
 
-R_gs = source_size
+R_1_2_gs = source_size
+R_1_2_ld = source_size
+R_1_2_pl = source_size
+R_1_2_ad = source_size
+
+R_gs = R_1_2_gs/np.sqrt(np.log(2))
 R2_gs = R_gs * R_gs
 
-R_1_2_ld = source_size * np.sqrt(np.log(2.0))
-R_ld = R_1_2_ld / np.sqrt(1.0 - np.power(0.5, 2)/(p_ld + 2))
+R_ld = R_1_2_ld / np.sqrt(1.0 - np.power(0.5, 1/(p_ld + 1))) 
 R2_ld = R_ld * R_ld
 
-R_1_2_pl = source_size * np.sqrt(np.log(2.0))
-R_pl = R_1_2_pl / np.sqrt((np.power(2.0, 1.0/(p_pl - 1)) - 1.0)/np.log(2.0))
+R_pl = R_1_2_pl / np.sqrt(np.power(2, 1/(p_pl - 1)) - 1 )
+
 R2_pl = R_pl * R_pl
 
-R_1_2_ad = source_size * np.sqrt(np.log(2.0))
-R_ad = R_1_2_ad/4.0
+R_ad = R_1_2_ad / 4.0
 R2_ad = R_ad * R_ad
 
 def H(x):
@@ -518,30 +521,47 @@ def get_values(d):
     d2 = np.power(d, 2)
     
     
-    factorex_gs = np.exp(- d2 / R2_gs)
-    factorex_ld = ((p_ld + 1)/(np.pi * R2_ld)) * H(1 - d2/R2_ld) * pow(1 - d2/R2_ld, p_ld)
-    factorex_pl = ((p_pl - 1)/(np.pi * R2_pl)) * (1/pow(1 + d2/R2_pl, p_pl))
+    factorex_gs = np.exp(- d2 / R2_gs) / (np.pi * R2_gs)
+    factorex_ld = ((p_ld + 1)/(np.pi * R2_ld)) * H(1 - d2/R2_ld) * pow(1 - d2/R2_ld, p_ld) # ok
+    
+    
+    factorex_pl = ((p_pl - 1)/(np.pi * R2_pl)) * np.power(1 + d2/R2_pl, -p_pl)
+    
     factorex_ad = (3 * R_ad  / (2 * np.pi * np.power(d, 3))) * (1 - np.sqrt(R_ad/d))
     factorex_ad[np.abs(d) < R_ad] = 0.0
 
     factorex_ad = factorex_ad/np.max(factorex_ad)
     factorex_gs = factorex_gs/np.max(factorex_gs)
-    factorex_pl = factorex_pl/np.max(factorex_pl)
     factorex_ld = factorex_ld/np.max(factorex_ld)
+    factorex_pl = factorex_pl/np.max(factorex_pl)
     
-    return factorex_ad, factorex_gs, factorex_pl, factorex_ld
+    return factorex_ad, factorex_gs, factorex_ld, factorex_pl
 
 data = []
-x = np.arange(-0.5, 0.5, 0.001)
-y = np.arange(-0.5, 0.5, 0.001)
-for _x in x:
-    d = np.sqrt(np.power(_x, 2) + np.power(y, 2))
-    v = get_values(d)
-    data.append(d)
-plt.imshow(data)
+m = 1
+x = np.arange(-m, m, 0.001)
+y = np.arange(-m, m, 0.001)
+x1d = np.arange(0, m, 0.001)
+
+dist = np.sqrt(np.power(np.tensordot(x, np.ones_like(x), axes=0), 2) + np.power(np.tensordot(np.ones_like(y), y, axes=0), 2))
+data = get_values(dist)
+data1d = get_values(x1d)
+
+for i in range(0, 4):
+    fig=plt.figure(figsize=(10,10))
+    plt.title(['AD', 'GS', 'LD', 'PL'][i])
+    plt.imshow(data[i], extent=[min(x), max(x), min(y), max(y)])
+    plt.plot(x1d, 0.3 * data1d[i], '-')
+    plt.plot(x1d[x1d > source_size], 0.3 * data1d[i][x1d > source_size], '-', color='red')
+    
+    print("2d: ", np.sum(data[i])/np.sum(data[i][dist < source_size]), np.sum(data[i])/np.sum(data[i][dist > source_size]))
+    print("1d:", np.sum(data1d[i])/np.sum(data1d[i][x1d < source_size]), np.sum(data1d[i])/np.sum(data1d[i][x1d > source_size]))
+    plt.show()
 # -
 
-plt.imshow(np.sqrt(np.einsum('j,i', np.power(x, 2), np.power(y, 2))))
+1/np.sqrt(np.log(2))
+
+
 
 
 

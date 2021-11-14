@@ -9,6 +9,9 @@ float distance(float x, float y) {
   return distance(x, y, 0, 0);
 }
 
+#define SQRT_LOG_2 0.8325546111576977
+#define INV_SQRT_LOG_2 1.2011224087864498
+
 void randomiseMicrolenses(Microlens *ul, Configuration conf) {
   int n = conf.nMicrolenses;
   float R = conf.R_field;
@@ -148,6 +151,9 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
   
     float factorex_gs, factorex_ld, factorex_pl, factorex_ad, factorex_el, factorex_el_p;
 
+    float const_ld = 1 / sqrt(1.0 - pow(0.5, 1/(c.p_ld + 1.0)));
+    float const_pl = 1 / sqrt(pow(2.0, 1.0 / (c.p_pl - 1.0)) - 1.0);
+
 #if DEBUG == true
     for (int i = 0; i < c.nLCsteps - 1; i++) {
 #else
@@ -159,46 +165,46 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
       float d2 = d * d;
  
       int index = 2;
-      for (float source_size = c.source_size[0]; source_size < c.source_size[1]; source_size+=c.source_size[2]) {
-        if (d < 10 * source_size) {
-
-          float R_gs = source_size;
+      for (float R_1_2 = c.source_size[0]; R_1_2 < c.source_size[1]; R_1_2 += c.source_size[2]) {
+        if (d < 10 * R_1_2) {
+          float R_gs = R_1_2 * INV_SQRT_LOG_2;
           float R2_gs = R_gs * R_gs;
-      
-          float R_1_2_ld = source_size * sqrt(log(2.0));
-          float R_ld = R_1_2_ld / sqrt(1.0 - pow(0.5, 2)/(c.p_ld + 2));
+
+          float R_ld = R_1_2 * const_ld;
           float R2_ld = R_ld * R_ld;
-    
-          float R_1_2_pl = source_size * sqrt(log(2.0));
-          float R_pl = R_1_2_pl / sqrt((pow(2.0, 1.0/(c.p_pl - 1)) - 1.0)/log(2.0));
+
+          float R_pl = R_1_2 * const_pl;
           float R2_pl = R_pl * R_pl;
-      
-          float R_1_2_ad = source_size * sqrt(log(2.0));
-          float R_ad = R_1_2_ad/4.0;
+
+          float R_ad = R_1_2 / 4.0;
           //float R2_ad = R_ad * R_ad; // unused
     
-          factorex_gs = expf(- d2 / R2_gs);
-          factorex_ld = ((c.p_ld + 1)/(M_PI * R2_ld)) * H(1 - d2/R2_ld) * pow(1 - d2/R2_ld, c.p_ld);
-          factorex_pl = ((c.p_pl - 1)/(M_PI * R2_pl)) * (1/pow(1 + d2/R2_pl, c.p_pl));
+          // proper normalization constants are ignored here, since a separate normalization factor is being calculated for each lc
           if (d > R_ad) {
             factorex_ad = (3 * R_ad  / (2 * M_PI * pow(d, 3))) * (1 - sqrt(R_ad/d));
             atomicAdd(&lc[i + (index + 0) * c.nLCsteps], factorex_ad); // Normalization
             atomicAdd(&lc[i + (index + 1) * c.nLCsteps], pix * factorex_ad); // Amplitude value, non-normalized  
           }
+          
+          factorex_gs = expf(- d2 / R2_gs); // * (1 / (M_PI * R2_gs))
           atomicAdd(&lc[i + (index + 2) * c.nLCsteps], factorex_gs); // Normalization
           atomicAdd(&lc[i + (index + 3) * c.nLCsteps], pix * factorex_gs); // Amplitude value, non-normalized  
   
-          atomicAdd(&lc[i + (index + 4) * c.nLCsteps], factorex_ld); // Normalization
-          atomicAdd(&lc[i + (index + 5) * c.nLCsteps], pix * factorex_ld); // Amplitude value, non-normalized  
-  
+          if (d < R_ld) {
+            factorex_ld = pow(1 - d2/R2_ld, c.p_ld); // * ((c.p_ld + 1)/(M_PI * R2_ld)) * H(1 - d2/R2_ld)
+            atomicAdd(&lc[i + (index + 4) * c.nLCsteps], factorex_ld); // Normalization
+            atomicAdd(&lc[i + (index + 5) * c.nLCsteps], pix * factorex_ld); // Amplitude value, non-normalized    
+          }
+
+          factorex_pl = pow(1 + d2/R2_pl, - c.p_pl); // * ((c.p_pl - 1)/(M_PI * R2_pl))
           atomicAdd(&lc[i + (index + 6) * c.nLCsteps], factorex_pl); // Normalization
           atomicAdd(&lc[i + (index + 7) * c.nLCsteps], pix * factorex_pl); // Amplitude value, non-normalized  
           
           int e_index = index + 8;
-          for (float eccentricity = c.eccentricity[0]; eccentricity < c.eccentricity[1]; eccentricity+=c.eccentricity[2]) {
+          for (float eccentricity = c.eccentricity[0]; eccentricity < c.eccentricity[1]; eccentricity += c.eccentricity[2]) {
             float e2_el = eccentricity * eccentricity;
-            float a_el = source_size / (1 - e2_el);
-            float b_el = source_size * (1 - e2_el);
+            float a_el = R_1_2 / (1 - e2_el);
+            float b_el = R_1_2 * (1 - e2_el);
         
             //float a2_el = a_el * a_el; // unused
             //float b2_el = b_el * b_el; // unused
