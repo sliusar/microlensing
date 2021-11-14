@@ -94,8 +94,7 @@ void Configuration::display() {
     cout << "  M_max: " << M_max << endl;
     cout << "  nMicrolenses: " << nMicrolenses << endl;
     cout << "  V_max: " << V_max << endl;
-    cout << "  t_max: " << t_max << endl;
-    cout << "  dt: " << dt << endl;
+    cout << "  t_max: " << t_max << ", step: " << dt << endl;
     cout << endl;
   
     cout << "--- Ray tracing ---" << endl;
@@ -109,8 +108,7 @@ void Configuration::display() {
         cout << "  Start y1: " << lc_start_y1 << endl;
         cout << "  Start y2: " << lc_start_y2 << endl;
         cout << "  Angle: " << lc_angle << endl;
-        cout << "  T: [0, " << lc_dist_max << "]" << endl;
-        cout << "  dT: " << lc_dist_step << endl;  
+        cout << "  T: [0, " << lc_dist_max << "], step: " << lc_dist_step << endl;
         cout << endl;
     }
     
@@ -124,8 +122,8 @@ void Configuration::display() {
     cout << endl;
 
     cout << "--- Sources ---" << endl;
-    cout << "source_size: [" << source_size[0] << ", " << source_size[1] << "), step = " << source_size[2] << " (" << nCountSourceSizes << " steps in total)" << endl;
-    cout << "eccentricity: [" << eccentricity[0] << ", " << eccentricity[1] << "), step = " << eccentricity[2] << " (" << nCountEccentricities << " steps in total)" << endl;
+    cout << "source_size: [" << source_size[0] << ", " << source_size[1] << "), step: " << source_size[2] << " (" << nCountSourceSizes << " steps in total)" << endl;
+    cout << "eccentricity: [" << eccentricity[0] << ", " << eccentricity[1] << "), step: " << eccentricity[2] << " (" << nCountEccentricities << " steps in total)" << endl;
     cout << "p_ld: " << p_ld << endl;
     cout << "p_pl: " << p_pl << endl;
 

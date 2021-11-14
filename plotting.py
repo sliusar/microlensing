@@ -665,15 +665,15 @@ plt.close()
 
 
 # +
-fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 12), gridspec_kw={'height_ratios': [10, 2, 2]})
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 14), gridspec_kw={'height_ratios': [14, 2, 2]})
 fig.tight_layout()
 fig.subplots_adjust(left=0.09, top=0.98)
 
-iterations = np.arange(0, 20, 0.1)
-r = 0.2
-e = 0.7
-sigma = 0.5
-moving_stars = True
+iterations = np.arange(0, 1, 0.1)
+r = 0.1
+e = 0.5
+sigma = 0.1
+moving_stars = False
 
 ims = []
 max_ampl = []
@@ -765,29 +765,40 @@ plt.legend()
 plt.tight_layout()
 
 # +
-figure = plt.figure(figsize=(12,5))
-plt.plot(x['t'], x['el_r0.1_e0.1'], color='blue')
-#plt.plot(x['t'], x['el_r0.2_e0.5'], color='grey')
-#plt.plot(x['t'], x['el_r0.3_e0.5'], color='grey')
-plt.plot(x['t'], x['gs_r0.1'], color='grey')
-#plt.plot(x['t'], x['el_r0.5_e0.5'], color='grey')
-#plt.plot(x['t'], x['el_r0.6_e0.5'], color='grey')
-plt.plot(x['t'], x['el_r0.7_e0.1'], color='red')
+x = get_lc_data('./output/s0.1_e0.1-0.9_r0.1-0.7/lc_0.00.dat')
 
-
-plt.plot(x['t'], x['el_orth_r0.1_e0.1'], color='green')
-#plt.plot(x['t'], x['el_orth_r0.2_e0.5'], color='yellow')
-#plt.plot(x['t'], x['el_orth_r0.3_e0.5'], color='yellow')
-#plt.plot(x['t'], x['el_orth_r0.4_e0.5'], color='yellow')
-#plt.plot(x['t'], x['el_orth_r0.5_e0.5'], color='yellow')
-#plt.plot(x['t'], x['el_orth_r0.6_e0.5'], color='yellow')
-plt.plot(x['t'], x['el_orth_r0.7_e0.1'], color='cyan')
-
-plt.xlim([12.5, 16.0])
+figure = plt.figure(figsize=(14,6))
+plt.plot(x['t'], x['gs_r0.2'], label='gs')
+plt.plot(x['t'], x['el_r0.2_e0.7'], label='el0.7')
+plt.plot(x['t'], x['el_r0.2_e0.9'], label='el0.9')
+plt.legend()
+plt.ylim([5, 45])
 plt.show()
-# -
 
-x.attrs
+
+figure = plt.figure(figsize=(14,6))
+plt.plot(x['t'], x['gs_r0.2'], label='gs')
+plt.plot(x['t'], x['ld_r0.2'], label='ld')
+plt.plot(x['t'], x['pl_r0.2'], label='pl')
+plt.legend()
+plt.ylim([5, 45])
+plt.show()
+
+# +
+x = get_lc_data('./output/s0.1_e0.1-0.9_r0.1-0.7/lc_0.00.dat')
+
+figure = plt.figure(figsize=(14,6))
+plt.plot(x['t'], x['gs_r0.2'], label='gs', linestyle='dashed')
+plt.plot(x['t'], x['el_r0.2_e0.7'], label='el0.7')
+plt.plot(x['t'], x['el_r0.2_e0.9'], label='el0.9')
+plt.plot(x['t'], x['el_orth_r0.2_e0.9'], label='el0.9orth')
+plt.plot(x['t'], x['el_orth_r0.2_e0.7'], label='el0.7orth')
+plt.plot(x['t'], x['ld_r0.2'], label='ld')
+plt.plot(x['t'], x['pl_r0.2'], label='pl')
+plt.legend()
+plt.ylim([5, 45])
+plt.xlim([22, 27])
+plt.show()
 
 # +
 from numpy import mean
@@ -813,6 +824,6 @@ plt.plot(X[0], '.')
 plt.plot(X[1], '.')
 plt.plot(X[2], '.')
 
-y
+
 
 
