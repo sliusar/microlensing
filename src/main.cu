@@ -298,7 +298,8 @@ int main(const int argc, const char** argv) {
   cout << " Raytracing time: " << t_raytracing << "s (mean: " << t_raytracing/counter << "s)" << endl;
   cout << " Light curve calculation time: " << t_lc << "s (mean: " << t_lc/counter << "s)" << endl;
   cout << " Output time: " << t_output << "s (mean: " << t_output / counter << "s)" << endl;
-  cout << " Total time: " << getCurrentTimestamp() - t0 << "s" << endl;
+  double t_total = getCurrentTimestamp() - t0;
+  cout << " Total time: " << t_total << "s (mean: " << t_total / counter << "s)" << endl;
 
   return 0;
 }

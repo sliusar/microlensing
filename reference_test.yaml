@@ -43,18 +43,6 @@ eccentricity: [0.1, 0.901, 0.1] # start, stop, step
 p_ld: 2.0
 p_pl: 1.5
 
-##########################
-# GPU:  MSI P104-100 8GB #
-##########################
-# Raytracing time: 374.705s (mean: 3.74705s)
-# Light curve calculation time: 266.943s (mean: 2.66943s)
-# Output time: 2.31795s (mean: 0.0231795s)
-# Total time: 648.358s
-#
-# real    10m48.671s
-# user    7m42.784s
-# sys     3m4.589s
-
 # rs = 0.03 rE = 1.5 light days (λ = 5430 Å)
 
 # Microlensing of Q2237+0305: Simulations and Statistics
