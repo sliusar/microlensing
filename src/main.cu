@@ -12,6 +12,7 @@ using namespace std;
 #define CUDA_BLOCK_SIZE_2d 32
 
 int verbose = 0;
+double global_normalization = 1.0;
 
 int write_image(char* filename, int* image, Configuration c) {
   FILE *fp = fopen(filename, "wb");
@@ -47,7 +48,7 @@ int write_lc(char* filename, float* lc, Configuration c) {
     fwrite((const void*)&lc[counter + 0 * c.nLCsteps], sizeof(float), 1, fp);
     fwrite((const void*)&lc[counter + 1 * c.nLCsteps], sizeof(float), 1, fp);
     for (int i = 2; i < c.nLCcolumns; i+=2) {
-      float k = lc[counter + (i + 1) * c.nLCsteps] / lc[counter + i * c.nLCsteps];
+      float k = lc[counter + (i + 1) * c.nLCsteps] / lc[counter + i * c.nLCsteps] / global_normalization;
       fwrite((const void*)&k, sizeof(float), 1, fp);
     }
   counter++;
@@ -102,6 +103,9 @@ int main(const int argc, const char** argv) {
   int _c = estimateRaysCount(conf.R_rays, conf.dx_rays);
   cout << "Print estimated rays count " << _c << " (previous " << conf.nRays << "). Adjusting value." << endl;
   conf.nRays = _c;
+
+  global_normalization = (_c / (M_PI * conf.R_rays * conf.R_rays)) * conf.image_pixel_y1_size * conf.image_pixel_y2_size;
+  cout << "Global normalization factor (number of rays in one image pixel): " << global_normalization << endl;
 
   int uls_bytes = conf.nMicrolenses * sizeof(Microlens);
   int rays_bytes = conf.nRays * sizeof(Ray);
@@ -269,7 +273,7 @@ int main(const int argc, const char** argv) {
       for (float t = 0.0; t < conf.lc_dist_max; t = t + conf.lc_dist_step) {
           outf << t << " " << lc[counter + 0 * conf.nLCsteps] << " " << lc[counter + 1 * conf.nLCsteps] << " ";
           for (int i = 2; i < conf.nLCcolumns; i+=2) {
-            outf << lc[counter + (i + 1) * conf.nLCsteps] / lc[counter + i * conf.nLCsteps] << " ";
+            outf << lc[counter + (i + 1) * conf.nLCsteps] / lc[counter + i * conf.nLCsteps] / global_normalization << " ";
           }
           outf << endl;
         counter++;
