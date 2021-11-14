@@ -46,14 +46,14 @@ p_pl: 1.5
 ##########################
 # GPU:  MSI P104-100 8GB #
 ##########################
-# Raytracing time: 23.5115s (mean: 2.35115s)
-# Light curve calculation time: 5.25238s (mean: 0.525238s)
-# Output time: 0.357522s (mean: 0.0357522s)
-# Total time: 31.4721s
+# Raytracing time: 23.8471s (mean: 2.38471s)
+# Light curve calculation time: 2.73225s (mean: 0.273225s)
+# Output time: 0.153974s (mean: 0.0153974s)
+# Total time: 28.7249s
 #
-# real    0m31.585s
-# user    0m22.181s
-# sys     0m9.174s
+# real    0m28.808s
+# user    0m20.642s
+# sys     0m8.028s
 
 # rs = 0.03 rE = 1.5 light days (λ = 5430 Å)
 
