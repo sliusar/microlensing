@@ -108,17 +108,17 @@ int main(const int argc, const char** argv) {
   cout << "Global normalization factor (number of rays in one image pixel): " << global_normalization << endl;
 
   int uls_bytes = conf.nMicrolenses * sizeof(Microlens);
-  int rays_bytes = conf.nRays * sizeof(Ray);
+  //int rays_bytes = conf.nRays * sizeof(Ray);
   int image_bytes = conf.image_height * conf.image_width * sizeof(int);
   int lc_bytes = conf.nLCcolumns * conf.nLCsteps * sizeof(float);
 
   Microlens *microlenses = (Microlens*)malloc(uls_bytes);
-  Ray *rays = (Ray*)malloc(rays_bytes);
+  //Ray *rays = (Ray*)malloc(rays_bytes);
   int *image = (int*)malloc(image_bytes);
   float *lc = (float*)malloc(lc_bytes);
 
   Microlens *ul_buf;
-  Ray *rays_buf;
+  //Ray *rays_buf;
   int *image_buf;
   float *lc_buf;
 
@@ -134,12 +134,12 @@ int main(const int argc, const char** argv) {
 
   cudaMalloc(&image_buf, image_bytes);
   
-  cout << "Creating rays field ... " << flush;
-  StartTimer();
-  cudaMalloc(&rays_buf, rays_bytes);
-  populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
-  cudaMemcpy(rays_buf, rays, rays_bytes, cudaMemcpyHostToDevice);
-  cout << GetElapsedTime() << "s" << endl;
+  //cout << "Creating rays field ... " << flush;
+  //StartTimer();
+  //cudaMalloc(&rays_buf, rays_bytes);
+  //populateRays(rays, conf.nRays, conf.R_rays, conf.dx_rays);
+  //cudaMemcpy(rays_buf, rays, rays_bytes, cudaMemcpyHostToDevice);
+  //cout << GetElapsedTime() << "s" << endl;
 
   if (conf.lc_enabled) {
     cout << "Creating light curve placeholder ... " << flush;
@@ -194,8 +194,8 @@ int main(const int argc, const char** argv) {
     cout << "    [CUDA] Running ray tracing ... " << flush;
     StartTimer();
     //cudaFuncSetAttribute(deflectRays, cudaFuncAttributeMaxDynamicSharedMemorySize, 98304);
-    deflectRays<<<nBlocksRays, CUDA_BLOCK_SIZE>>>(ul_buf, rays_buf, conf, t, image_buf, lc_buf); // compute ray deflections
-    if (conf.save_rays) cudaMemcpy(rays, rays_buf, rays_bytes, cudaMemcpyDeviceToHost);
+    deflectRays<<<nBlocksRays, CUDA_BLOCK_SIZE>>>(ul_buf, conf, t, image_buf, lc_buf); // compute ray deflections
+    //if (conf.save_rays) cudaMemcpy(rays, rays_buf, rays_bytes, cudaMemcpyDeviceToHost);
     if (conf.lc_enabled) cudaMemcpy(lc, lc_buf, lc_bytes, cudaMemcpyDeviceToHost);
     if (conf.save_images) cudaMemcpy(image, image_buf, image_bytes, cudaMemcpyDeviceToHost);
     cudaError_t err = cudaDeviceSynchronize();
@@ -223,18 +223,18 @@ int main(const int argc, const char** argv) {
       cout << _t << "s" << endl;
     }
 
-    if (conf.save_rays) {
-      sprintf(filename, "%s/rays_%.2f.dat", output_folder, t);
-      cout << "    Writing rays data to " << filename << " ... " << flush;
-      outf.open(filename);
-      for (int i = 0; i <= conf.nRays; i++) {
-        if (rays[i].x1 >= conf.image_y1_left && rays[i].x1 <= conf.image_y1_right && rays[i].x2 >= conf.image_y2_bottom && rays[i].x2 <= conf.image_y2_top) {
-          outf << rays[i].x1 << " " << rays[i].x2 << endl;
-        }
-      }
-      outf.close();
-      cout << GetElapsedTime() << "s" << endl;
-    }
+//    if (conf.save_rays) {
+//      sprintf(filename, "%s/rays_%.2f.dat", output_folder, t);
+//      cout << "    Writing rays data to " << filename << " ... " << flush;
+//      outf.open(filename);
+//      for (int i = 0; i <= conf.nRays; i++) {
+//        if (rays[i].x1 >= conf.image_y1_left && rays[i].x1 <= conf.image_y1_right && rays[i].x2 >= conf.image_y2_bottom && rays[i].x2 <= conf.image_y2_top) {
+//          outf << rays[i].x1 << " " << rays[i].x2 << endl;
+//        }
+//      }
+//      outf.close();
+//      cout << GetElapsedTime() << "s" << endl;
+//    }
 
     sprintf(filename, "%s/image_%.2f.dat", output_folder, t);
     if (conf.save_images) {
@@ -291,13 +291,13 @@ int main(const int argc, const char** argv) {
   }
 
   free(microlenses);
-  free(rays);
+//  free(rays);
   free(image);
   free(lc);
 
   cudaFree(ul_buf);
   cudaFree(lc_buf);
-  cudaFree(rays_buf);
+//  cudaFree(rays_buf);
   cudaFree(image_buf);
 
   cout << endl << ">>> Run summary:" << endl;

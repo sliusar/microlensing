@@ -100,7 +100,8 @@ __device__ float H(float x) {
   return (x > 0) ? 1.0 : 0.0;
 }
 
-__global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, int *image, float* lc) {
+//__global__ void deflectRays(Microlens *uls, Ray *rays, const Configuration c, const float t, int *image, float* lc) {
+__global__ void deflectRays(Microlens *uls, const Configuration c, const float t, int *image, float* lc) {
   int ri = blockDim.x * blockIdx.x + threadIdx.x;
   int j = ri / c.nRaysLine;
   int i = ri - j * c.nRaysLine;

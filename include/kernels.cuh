@@ -19,7 +19,8 @@ __device__ float dst(float, float);
 __device__ float dst(float, float, float, float);
 __device__ float H(float, float);
 
-__global__ void deflectRays(Microlens *, Ray *, const Configuration, const float, int *, float *);
+//__global__ void deflectRays(Microlens *, Ray *, const Configuration, const float, int *, float *);
+__global__ void deflectRays(Microlens *, const Configuration, const float, int *, float *);
 __global__ void calculateLCs(const Configuration, int *, float *);
 
 #endif /* !INCLUDE_KERNELS_CUH */
