@@ -225,7 +225,7 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
             atomicAdd(&lc[i + (e_index + 2) * c.nLCsteps], factorex_el_p); // Normalization
             atomicAdd(&lc[i + (e_index + 3) * c.nLCsteps], pix * factorex_el_p); // Amplitude value, non-normalized
 #if DEBUG == true            
-            lc[(c.nLCsteps - 1) + (e_index + 0) * c.nLCsteps] = eccentricity;
+            lc[(c.nLCsteps - 1) + (e_index + 0) * c.nLCsteps] = R_1_2;
             lc[(c.nLCsteps - 1) + (e_index + 1) * c.nLCsteps] = 5;
             lc[(c.nLCsteps - 1) + (e_index + 2) * c.nLCsteps] = eccentricity;
             lc[(c.nLCsteps - 1) + (e_index + 3) * c.nLCsteps] = 6;
@@ -233,13 +233,13 @@ __global__ void calculateLCs(const Configuration c, int *image, float *lc) {
             e_index += 4;
           }
 #if DEBUG == true
-          lc[(c.nLCsteps - 1) + (index + 0) * c.nLCsteps] = R_gs;
+          lc[(c.nLCsteps - 1) + (index + 0) * c.nLCsteps] = R_ad;
           lc[(c.nLCsteps - 1) + (index + 1) * c.nLCsteps] = 1;
           lc[(c.nLCsteps - 1) + (index + 2) * c.nLCsteps] = R_gs;
           lc[(c.nLCsteps - 1) + (index + 3) * c.nLCsteps] = 2;
-          lc[(c.nLCsteps - 1) + (index + 4) * c.nLCsteps] = R_gs;
+          lc[(c.nLCsteps - 1) + (index + 4) * c.nLCsteps] = R_ld;
           lc[(c.nLCsteps - 1) + (index + 5) * c.nLCsteps] = 3;
-          lc[(c.nLCsteps - 1) + (index + 6) * c.nLCsteps] = R_gs;
+          lc[(c.nLCsteps - 1) + (index + 6) * c.nLCsteps] = R_pl;
           lc[(c.nLCsteps - 1) + (index + 7) * c.nLCsteps] = 4;
 #endif
         }
