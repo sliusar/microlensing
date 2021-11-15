@@ -256,8 +256,6 @@ if False:
 
 
 
-
-
 if False:
     from scipy import signal
     import matplotlib.colors as mcolors
@@ -320,8 +318,6 @@ if False:
     autoscale_y(ax_corr)
     fig.tight_layout()
     plt.show()
-
-
 # +
 directory='s0.4_e0.1-0.9_r0.1-0.7'
 iterations = np.arange(0, 100, 0.1)
@@ -602,64 +598,40 @@ line7, = ax3.plot(lc['t'], pl,      '-', color=colors[2], label='PL' if t == 0 e
 
 plt.show()
 plt.close()
-# -
-
-
 # +
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 14), gridspec_kw={'height_ratios': [12, 1.2, 1.2]})
 fig.tight_layout()
 fig.subplots_adjust(left=0.09, top=0.98)
 
-iterations = np.arange(0, 5, 0.05)
-r = 0.2
-e = 0.7
-sigma = 0.5
-moving_stars = True
+t = 0.1
+r = 0.5
+e = 0.5
 
-ims = []
-max_ampl = []
-s_max = 0
-for t in iterations:
-    if 10 * t % 10 == 0:
-        print("t=%.2f" % t)
-    filename1 = f"output/reference_test/image_%.2f.dat" % t
-    filename2 = f"output/reference_test/lc_%.2f.dat" % t
-    img, extent = get_image_data(filename1, logscale=True)
-    lc = get_lc_data(filename2)
-    title = ax1.text(0.5, 1.01, "t=%.2f" % t, ha="center",va="bottom", transform=ax1.transAxes, fontsize="large")
-    line1 = ax1.imshow(img, interpolation='antialiased', extent=extent, origin='lower', vmin=1, vmax=2)
-    ax1.plot(lc['y1'], lc['y2'], color='red', linewidth=1, linestyle='dashed')
-    
-    ad = lc[f'ad_r{r}']
-    gs = lc[f'gs_r{r}']
-    ld = lc[f'ld_r{r}']
-    pl = lc[f'pl_r{r}']
-    el = lc[f'el_r{r}_e{e}']
-    el_orth = lc[f'el_orth_r{r}_e{e}']
-    
-    
-    line2, = ax2.plot(lc['t'], el,      '-', color=colors[0], label='EL' if t == 0 else None)
-    line3, = ax2.plot(lc['t'], el_orth, '-', color=colors[1], label='EL ⊥' if t == 0 else None)
-    line4, = ax2.plot(lc['t'], gs,      '-', color=colors[2], linestyle='dotted', label='Gauss' if t == 0 else None)
-    
-    line5, = ax3.plot(lc['t'], ad,      '-', color=colors[0], label='AD' if t == 0 else None)
-    line6, = ax3.plot(lc['t'], ld,      '-', color=colors[1], label='LD' if t == 0 else None)
-    line7, = ax3.plot(lc['t'], pl,      '-', color=colors[2], label='PL' if t == 0 else None)
-    
-    _m = max([max(i) for i in [ad, gs, ld, pl, el, el_orth]])
-    s_max = _m if _m > s_max else s_max
-    
-    ims.append([line1, line2, line3, line4, line5, line6, line7, title])
+filename1 = f"output/reference_test/image_%.2f.dat" % t
+filename2 = f"output/reference_test/lc_%.2f.dat" % t
+img, extent = get_image_data(filename1, logscale=True)
+lc = get_lc_data(filename2)
+title = ax1.text(0.5, 1.01, "t=%.2f" % t, ha="center",va="bottom", transform=ax1.transAxes, fontsize="large")
+line1 = ax1.imshow(img, interpolation='antialiased', extent=extent, origin='lower', vmin=1, vmax=2)
+ax1.plot(lc['y1'], lc['y2'], color='red', linewidth=1, linestyle='dashed')
 
-ax2.legend(loc='upper right')
-ax3.legend(loc='upper right')
-#for l in ims:
-#    _l1, _l3, _l6, _l7, _t = l
-#    #_l1, _l2, _l3, _l4, _l5, _l6, _l7, _t = l
-#    #_l2.axes.set_ylim([0, 1.05 * s_max])
+ad = lc[f'ad_r{r}']
+gs = lc[f'gs_r{r}']
+ld = lc[f'ld_r{r}']
+pl = lc[f'pl_r{r}']
+el = lc[f'el_r{r}_e{e}']
+el_orth = lc[f'el_orth_r{r}_e{e}']
 
-ani = animation.ArtistAnimation(fig, ims, interval=200, blit=True, repeat=False)
-ani.save('images/dynamic_images_test.mp4')
+line2, = ax2.plot(lc['t'], el,      '-', color=colors[0], label='EL')
+line3, = ax2.plot(lc['t'], el_orth, '-', color=colors[1], label='EL ⊥')
+line4, = ax2.plot(lc['t'], gs,      '-', color=colors[2], linestyle='dotted', label='Gauss')
+
+line5, = ax3.plot(lc['t'], ad,      '-', color=colors[0], label='AD')
+line6, = ax3.plot(lc['t'], ld,      '-', color=colors[1], label='LD')
+line7, = ax3.plot(lc['t'], pl,      '-', color=colors[2], label='PL')
+
+ax2.legend()
+ax3.legend()
 plt.show()
 plt.close()
 
@@ -669,10 +641,10 @@ fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 14), gridspec_kw={'height
 fig.tight_layout()
 fig.subplots_adjust(left=0.09, top=0.98)
 
-iterations = np.arange(0, 1, 0.1)
-r = 0.1
+iterations = np.arange(0, 0.1, 0.1)
+r = 0.5
 e = 0.5
-sigma = 0.1
+sigma = 0.5
 moving_stars = False
 
 ims = []
@@ -785,6 +757,34 @@ plt.ylim([5, 45])
 plt.show()
 
 # +
+sigma = 0.5
+iteration = '0.00'
+r = 0.7
+el1 = 0.7
+el2 = 0.8
+
+x = get_lc_data(f'./output/s{sigma}_e0.1-0.9_r0.1-0.7/lc_{iteration}.dat')
+
+
+figure = plt.figure(figsize=(14,6))
+plt.plot(x['t'], x[f'gs_r{r}'], label='gs')
+plt.plot(x['t'], x[f'el_r{r}_e{el1}'], label=f'el{el1}')
+plt.plot(x['t'], x[f'el_r{r}_e{el2}'], label=f'el{el2}')
+plt.legend()
+plt.show()
+
+
+figure = plt.figure(figsize=(14,6))
+plt.plot(x['t'], x[f'gs_r{r}'], label='gs')
+plt.plot(x['t'], x[f'ld_r{r}'], label='ld')
+plt.plot(x['t'], x[f'pl_r{r}'], label='pl')
+plt.legend()
+plt.show()
+# -
+
+x[f'pl_r{r}']
+
+# +
 x = get_lc_data('./output/s0.1_e0.1-0.9_r0.1-0.7/lc_0.00.dat')
 
 figure = plt.figure(figsize=(14,6))
@@ -796,7 +796,23 @@ plt.plot(x['t'], x['el_orth_r0.2_e0.9'], label='el0.9orth')
 plt.plot(x['t'], x['ld_r0.2'], label='ld')
 plt.plot(x['t'], x['pl_r0.2'], label='pl')
 plt.legend()
-plt.ylim([5, 45])
+#plt.ylim([5, 45])
+plt.xlim([22, 27])
+plt.show()
+
+# +
+x = get_lc_data('./output/s0.1_e0.1-0.9_r0.1-0.7/lc_0.00.dat')
+
+figure = plt.figure(figsize=(14,6))
+plt.plot(x['t'], x['gs_r0.2'], label='gs', linestyle='dashed')
+plt.plot(x['t'], x['el_r0.2_e0.7'], label='el0.7')
+plt.plot(x['t'], x['el_r0.2_e0.9'], label='el0.9')
+plt.plot(x['t'], x['el_orth_r0.2_e0.7'], label='el0.7orth')
+plt.plot(x['t'], x['el_orth_r0.2_e0.9'], label='el0.9orth')
+plt.plot(x['t'], x['ld_r0.2'], label='ld')
+plt.plot(x['t'], x['pl_r0.2'], label='pl')
+plt.legend()
+#plt.ylim([5, 45])
 plt.xlim([22, 27])
 plt.show()
 

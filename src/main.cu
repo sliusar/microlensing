@@ -193,6 +193,7 @@ int main(const int argc, const char** argv) {
 
     cout << "    [CUDA] Running ray tracing ... " << flush;
     StartTimer();
+    //cudaFuncSetAttribute(deflectRays, cudaFuncAttributeMaxDynamicSharedMemorySize, 98304);
     deflectRays<<<nBlocksRays, CUDA_BLOCK_SIZE>>>(ul_buf, rays_buf, conf, t, image_buf, lc_buf); // compute ray deflections
     if (conf.save_rays) cudaMemcpy(rays, rays_buf, rays_bytes, cudaMemcpyDeviceToHost);
     if (conf.lc_enabled) cudaMemcpy(lc, lc_buf, lc_bytes, cudaMemcpyDeviceToHost);
@@ -209,6 +210,7 @@ int main(const int argc, const char** argv) {
     if (conf.lc_enabled) {
       cout << "    [CUDA] Calculating light curves ... " << flush;
       StartTimer();
+      //cudaFuncSetAttribute(calculateLCs, cudaFuncAttributeMaxDynamicSharedMemorySize, 98304);
       calculateLCs<<<dim3(nBlocksImageW, nBlocksImageH), dim3(CUDA_BLOCK_SIZE_2d, CUDA_BLOCK_SIZE_2d)>>>(conf, image_buf, lc_buf); // compute lc
       cudaMemcpy(lc, lc_buf, lc_bytes, cudaMemcpyDeviceToHost);
       cudaError_t err = cudaDeviceSynchronize();
