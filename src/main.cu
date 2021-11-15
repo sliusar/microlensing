@@ -14,6 +14,18 @@ using namespace std;
 int verbose = 0;
 double global_normalization = 1.0;
 
+int create_folder(char* output_folder, string conf_str) {
+  struct stat info;
+  sprintf(output_folder, "./output/%s", conf_str.c_str());
+  if( stat(output_folder , &info ) != 0 ) {
+    if (mkdir(output_folder, 0755) != 0 && errno != EEXIST) {
+      cerr << "Failed to create output folder " << output_folder << endl;
+      return -1;
+    }
+  }
+  return 0;
+}
+
 int write_image(char* filename, int* image, Configuration c) {
   FILE *fp = fopen(filename, "wb");
   if(fp == NULL) {
@@ -114,23 +126,15 @@ int main(const int argc, const char** argv) {
 
   Microlens *microlenses = (Microlens*)malloc(uls_bytes);
   //Ray *rays = (Ray*)malloc(rays_bytes);
-  int *image = (int*)malloc(image_bytes);
-  float *lc = (float*)malloc(lc_bytes);
+  int __align__(16) *image = (int*)malloc(image_bytes);
+  float __align__(16) *lc = (float*)malloc(lc_bytes);
 
   Microlens *ul_buf;
   //Ray *rays_buf;
   int *image_buf;
   float *lc_buf;
 
-  struct stat info;
-
-  sprintf(output_folder, "./output/%s", conf.configuration_id.c_str());
-  if( stat(output_folder , &info ) != 0 ) {
-    if (mkdir(output_folder, 0755) != 0 && errno != EEXIST) {
-      cerr << "Failed to create output folder " << output_folder << endl;
-      return -1;
-    }
-  }
+  create_folder(output_folder, conf.configuration_id);
 
   cudaMalloc(&image_buf, image_bytes);
   
