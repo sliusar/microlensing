@@ -555,7 +555,7 @@ for i in range(0, 4):
     plt.show()
 # -
 
-1/np.sqrt(np.log(2))
+
 
 
 
